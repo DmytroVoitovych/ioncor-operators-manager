@@ -1,0 +1,31 @@
+:root {
+  /* Neutral */
+  --neutral-900: #21214d;
+  --neutral-600: #57577b;
+  --neutral-300: #9393b7;
+  --neutral-200: #cbcdd0;
+  --neutral-0: #ffffff;
+
+  /* Blue */
+  --blue-700: #2a4cd5;
+  --blue-600: #4865db;
+  --blue-200: #c7d3f7;
+  --blue-100: #e0e9fa;
+
+  /* Red */
+  --red-700: #e60013;
+
+  /* Other colors */
+  --red-300: #ff9b99;
+  --indigo-200: #b8b1ff;
+  --blue-300: #89caff;
+  --green-300: #8be780;
+  --amber-300: #ffc97c;
+
+  /* Gradient */
+  --light-gradient: linear-gradient(180deg, #f5f5ff 72.96%, #e0e0ff 100%);
+  --popover-shadow: 0 5px 8px 0 rgba(33, 33, 77, 0.16);
+
+  /* special */
+  --emoji-width: 38px;
+}

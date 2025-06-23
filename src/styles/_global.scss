@@ -1,0 +1,108 @@
+@use "./mixins" as *;
+
+body {
+  font-family:
+    "RedditSans", "Inter", "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  height: inherit;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#app {
+  height: inherit;
+  background-image: var(--light-gradient);
+  background-attachment: fixed;
+  background-size: cover;
+  flex-grow: 1;
+  display: grid;
+  grid-template-rows: 0fr 1fr 0fr;
+
+  &:has(> .baseAuthContainer) {
+    align-content: center;
+  }
+}
+
+.el-form:where(.auth, .onboarding) {
+  background-color: var(--neutral-0);
+  border-radius: 16px;
+  box-shadow: 0 8px 16px 0 rgba(32, 37, 41, 0.08);
+}
+
+.el-button {
+  &:focus-visible {
+    outline-width: 2px !important;
+    outline-offset: 3px !important;
+  }
+}
+
+.el-button--primary {
+  --el-color-primary-light-3: var(--blue-700);
+  --el-color-primary-light-5: var(--blue-600);
+}
+
+.el-notification {
+  font-family: inherit;
+}
+
+.el-popover {
+  &__title {
+    line-height: 1.2 !important;
+    margin-bottom: 2px !important;
+  }
+}
+
+.el-overlay {
+  --el-overlay-color-lighter: color-mix(in srgb, var(--neutral-900) 70%, transparent);
+
+  .el-dialog {
+    --el-dialog-border-radius: 16px;
+    --el-dialog-padding-primary: 32px 20px;
+    --el-dialog-width: calc(100% - 40px);
+
+    max-width: 600px;
+    background-image: var(--light-gradient);
+
+    @include mq(medium) {
+      --el-dialog-padding-primary: 48px 40px;
+    }
+
+    .el-icon.el-dialog__close {
+      --el-color-info: var(--neutral-300);
+    }
+  }
+}
+
+.el-popup-parent--hidden {
+  background-image: var(--light-gradient);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+.el-popover.barPopover {
+  --el-popover-border-color: var(--blue-100);
+  --el-popover-padding: 12px 12px;
+  --el-popover-border-radius: 10px;
+  --el-box-shadow-light: 0 4px 7px 0 rgba(33, 33, 77, 0.16);
+  --el-border-color-light: var(--blue-100);
+  --el-text-color-regular: var(--neutral-600);
+}
+
+@media (min-height: 600px) and (max-height: 679.5px) and (min-width: 960px) {
+  .scale {
+    transform: scale(0.7);
+  }
+}
+
+@media (min-height: 680px) and (max-height: 799.9px) and (min-width: 960px) {
+  .scale {
+    transform: scale(0.8);
+  }
+}
+
+@media (min-height: 800px) and (max-height: 960px) and (min-width: 960px) {
+  .scale {
+    transform: scale(0.9);
+  }
+}
