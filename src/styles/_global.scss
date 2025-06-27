@@ -89,6 +89,38 @@ body {
   --el-text-color-regular: var(--neutral-600);
 }
 
+.el-table {
+  --el-text-color-secondary: var(--neutral-900);
+
+  th {
+    font-weight: normal;
+  }
+
+  & .available {
+    background-color: hsl(from var(--status-available) h s l / 50%);
+  }
+
+  & .sick-leave {
+    background-color: hsl(from var(--status-sick-leave) h s l / 50%);
+  }
+
+  & .vacation {
+    background-color: hsl(from var(--status-vacation) h s l / 50%);
+  }
+
+  & .day-off {
+    background-color: hsl(from var(--status-day-off) h s l / 50%);
+  }
+
+  & .unknown {
+    background-color: hsl(from var(--status-unknown) h s l / 50%);
+  }
+
+  & .el-table__body-wrapper tr td.el-table-fixed-column--right {
+    background-color: var(--neutral-0);
+  }
+}
+
 @media (min-height: 600px) and (max-height: 679.5px) and (min-width: 960px) {
   .scale {
     transform: scale(0.7);

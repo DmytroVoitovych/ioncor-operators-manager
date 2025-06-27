@@ -1,6 +1,5 @@
-
 <template>
-<header>
-<AppLogo />
-</header>
+  <header>
+    <AppLogo />
+  </header>
 </template>

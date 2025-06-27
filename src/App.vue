@@ -1,15 +1,11 @@
 <template>
-
   <BaseHeader />
   <RouterView />
-
 </template>
 
-<script lang="ts" setup>
-
-</script>
+<script lang="ts" setup></script>
 <style scoped>
 .wrapper {
-display: grid;
+  display: grid;
 }
 </style>
