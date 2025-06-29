@@ -17,7 +17,7 @@ interface StationCollection extends StationMap {
   removeStation(name: string): void;
 }
 
-const STATIONS: StationCollection = {
+export const STATIONS: StationCollection = {
   "100": 1,
   "120": 1,
   "130": 1,
@@ -75,4 +75,6 @@ type Operator = User & {
   current_station: StationNumber;
 };
 
-export type { UserStatus, User, Manager, Operator };
+type UserCreationData = Pick<Operator, "name" | "surname" | "known_stations" | "status">;
+
+export type { UserStatus, User, Manager, Operator, UserCreationData, StationNumber };

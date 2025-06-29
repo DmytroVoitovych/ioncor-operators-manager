@@ -5,6 +5,7 @@
     :data="tableData"
     style="width: 100%"
     @selection-change="extractIds"
+    show-overflow-tooltip
   >
     <el-table-column type="expand">
       <template #default="props">
@@ -45,41 +46,25 @@
     <el-table-column prop="current_station" label="Current Station" />
     <el-table-column fixed="right" label="Operations" min-width="100">
       <template #default="scope">
-        <el-button type="primary" plain size="small">Edit</el-button>
-        <el-popconfirm
-          confirm-button-text="Yes"
-          cancel-button-text="No"
-          :icon="InfoFilled"
-          icon-color="var(--blue-600)"
-          title="Are you sure to delete this?"
-          @confirm="deleteWorker(scope.row.id)"
-        >
-          <template #reference>
-            <el-button type="danger" size="small" plain> delete </el-button>
-          </template>
-        </el-popconfirm>
+        <div class="operationBlock">
+          <EditOperatorBlock :operatorId="scope.row.id" />
+          <el-popconfirm
+            confirm-button-text="Yes"
+            cancel-button-text="No"
+            :icon="InfoFilled"
+            icon-color="var(--blue-600)"
+            title="Are you sure to delete this?"
+            @confirm="deleteWorker(scope.row.id)"
+          >
+            <template #reference>
+              <el-button type="danger" size="small" plain> delete </el-button>
+            </template>
+          </el-popconfirm>
+        </div>
       </template>
     </el-table-column>
   </el-table>
-  <div class="tableButtonBlock">
-    <el-button plain style="width: 100%" @click="onAddItem"> Add New Operator </el-button>
-    <el-popconfirm
-      confirm-button-text="Yes"
-      cancel-button-text="No"
-      :icon="InfoFilled"
-      icon-color="var(--blue-600)"
-      title="Are you sure to delete these selected operators?"
-      @confirm="deleteSelectedWorkers(multipleSelection)"
-      width="300"
-    >
-<template #reference>
-  <el-button :disabled="!multipleSelection.length" type="danger" plain style="width: 100%">
-        Delete selected Operators
-      </el-button>
-</template>
-
-    </el-popconfirm>
-  </div>
+  <TableButtonBlock :multipleSelection />
 </template>
 
 <script lang="ts" setup>
@@ -92,14 +77,14 @@ import { InfoFilled } from "@element-plus/icons-vue";
 
 const store = useWorkersStore();
 const { workers: tableData } = storeToRefs(store);
-const { deleteWorker, deleteSelectedWorkers } = store;
+const { deleteWorker } = store;
 
 const multipleSelection = ref<string[]>([]);
 
 const transformDate = (date: string) => dayjs(date).format("MMMM D, YYYY");
 const extractIds = (items: Operator[]) => (multipleSelection.value = items.map((item) => item.id));
 
-const now = new Date();
+// const now = new Date();
 
 const tableRowClassName = ({ row }: { row: Operator }) => {
   return String(row.status);
@@ -107,28 +92,6 @@ const tableRowClassName = ({ row }: { row: Operator }) => {
 
 const filterTag = (value: string, row: Operator) => {
   return row.status === (value as unknown);
-};
-
-const onAddItem = () => {
-  now.setDate(now.getDate() + 1);
-  tableData.value.push({
-    date: dayjs(now).format("YYYY-MM-DD"),
-    name: "Tom",
-    state: "California",
-    city: "Los Angeles",
-    address: "No. 189, Grove St, Los Angeles",
-    zip: "CA 90036",
-  });
-};
-
-const removeSelectedItems = () => {
-  const selectedRows = tableData.value.filter((item) => item.selected);
-  selectedRows.forEach((row) => {
-    const index = tableData.value.indexOf(row);
-    if (index > -1) {
-      tableData.value.splice(index, 1);
-    }
-  });
 };
 </script>
 
@@ -149,6 +112,15 @@ const removeSelectedItems = () => {
 .el-table :deep(.cell) {
   display: flex;
   line-height: 22px;
+
+  &.el-tooltip {
+    display: block;
+  }
+}
+
+.operationBlock {
+  display: flex;
+  gap: 8px;
 }
 
 .tableButtonBlock {
