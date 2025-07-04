@@ -69,7 +69,7 @@ type Manager = User & {
 
 type Operator = User & {
   role: "operator";
-  status: UserStatus;
+  status: Status;
   known_stations: StationNumber[];
   station_history: StationVisit[] | [];
   current_station: StationNumber;
@@ -77,4 +77,4 @@ type Operator = User & {
 
 type UserCreationData = Pick<Operator, "name" | "surname" | "known_stations" | "status">;
 
-export type { UserStatus, User, Manager, Operator, UserCreationData, StationNumber };
+export type { UserStatus, User, Manager, Operator, UserCreationData, StationNumber, StationId };

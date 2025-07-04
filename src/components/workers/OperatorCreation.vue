@@ -42,7 +42,12 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleClose">Cancel</el-button>
-        <el-button type="primary" @click="$emit('addOperator', handleClose)" :disabled="isEmpty">
+        <el-button
+          type="primary"
+          @click="$emit('addOperator', handleClose)"
+          :disabled="isEmpty || loading"
+          :loading="loading"
+        >
           Add Operator
         </el-button>
       </div>
@@ -56,6 +61,10 @@ import { CheckboxValueType, FormInstance } from "element-plus";
 import { watch } from "vue";
 import { computed, reactive, ref } from "vue";
 import { StationNumber, STATIONS, UserCreationData, Status } from "~/maintypes/types";
+
+defineProps<{
+  loading: boolean;
+}>();
 
 const formRef = templateRef<FormInstance>("formRef");
 

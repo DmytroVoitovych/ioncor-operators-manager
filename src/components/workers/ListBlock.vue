@@ -44,7 +44,7 @@
     />
     />
     <el-table-column prop="current_station" label="Current Station" />
-    <el-table-column fixed="right" label="Operations" min-width="100">
+    <el-table-column fixed="right" label="Operations" min-width="120">
       <template #default="scope">
         <div class="operationBlock">
           <EditOperatorBlock :operatorId="scope.row.id" />
@@ -54,10 +54,19 @@
             :icon="InfoFilled"
             icon-color="var(--blue-600)"
             title="Are you sure to delete this?"
-            @confirm="deleteWorker(scope.row.id)"
+            @confirm="
+              deleteWorker(scope.row.id, (loading) => setDeleteLoading(scope.row.id, loading))
+            "
           >
             <template #reference>
-              <el-button type="danger" size="small" plain> delete </el-button>
+              <el-button
+                type="danger"
+                size="small"
+                :loading="deleteLoadingState[scope.row.id] || false"
+                plain
+              >
+                delete
+              </el-button>
             </template>
           </el-popconfirm>
         </div>
@@ -68,7 +77,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { reactive, ref } from "vue";
 import dayjs from "dayjs";
 import { useWorkersStore } from "~/store/workers";
 import { Operator } from "~/maintypes/types";
@@ -78,13 +87,16 @@ import { InfoFilled } from "@element-plus/icons-vue";
 const store = useWorkersStore();
 const { workers: tableData } = storeToRefs(store);
 const { deleteWorker } = store;
-
 const multipleSelection = ref<string[]>([]);
 
 const transformDate = (date: string) => dayjs(date).format("MMMM D, YYYY");
 const extractIds = (items: Operator[]) => (multipleSelection.value = items.map((item) => item.id));
 
-// const now = new Date();
+const deleteLoadingState = reactive<Record<string, boolean>>({});
+
+const setDeleteLoading = (id: string, loading: boolean) => {
+  deleteLoadingState[id] = loading;
+};
 
 const tableRowClassName = ({ row }: { row: Operator }) => {
   return String(row.status);
