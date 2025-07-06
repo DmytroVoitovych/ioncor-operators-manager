@@ -24,15 +24,13 @@
             <Location color="var(--neutral-300)" width="20" height="20" /> Station
             {{ key }}
           </p>
-          <div class="stationInfo__content">
-            <p class="stationInfo__content__item">
-              <User color="var(--neutral-300)" width="16" height="16" />
-              <span class="stationInfo__content__item__value text-preset-9"
-                >{{ getStationSelect(key, LEFT_SIDE_KEY).value ? station : 0 }} / {{ station }}
-                {{ +station === 2 ? "operators" : "operator" }}</span
-              >
-            </p>
-          </div>
+          <StationInfoContent
+            :rightSide="getStationSelect(key, Right_SIDE_KEY).value"
+            :leftSide="getStationSelect(key, LEFT_SIDE_KEY).value"
+            :station="station"
+          >
+            {{ +station === 2 ? "operators" : "operator" }}
+          </StationInfoContent>
         </div>
         <el-select
           v-model="getStationSelect(key, Right_SIDE_KEY).value"
@@ -54,15 +52,15 @@
 </template>
 
 <script lang="ts" setup>
-import { Location, Plus, User } from "@element-plus/icons-vue";
-import { computed } from "vue";
+import { Location, Plus } from "@element-plus/icons-vue";
+import { computed, onMounted } from "vue";
 import { StationId } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { SideKey } from "./types";
 
-const LEFT_SIDE_KEY = 'left';
-const Right_SIDE_KEY = 'right';
+const LEFT_SIDE_KEY = "left";
+const Right_SIDE_KEY = "right";
 
 const operatorStore = useWorkersStore();
 const store = useStationsStore();
@@ -70,16 +68,20 @@ const store = useStationsStore();
 const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({
     get: () => store.getAssignment(stationId, slotKey),
-    set: (value: string) => store.assignPerson(stationId, slotKey, value),
+    set: (value: string) => {
+      store.assignPerson(stationId, slotKey, value);
+    },
   });
 };
 
 const availablePeople = (stationId: StationId) =>
   computed(() =>
     operatorStore.workers.filter(
-      (worker) => worker.status === "available" && worker.known_stations.includes(stationId)
+      (worker) => worker.status === "available" && worker.known_stations.includes(stationId),
     ),
   );
+
+onMounted(() => store.initializeStateFromWorkersStore());
 </script>
 <style lang="scss" scoped>
 .stationsList {
@@ -116,13 +118,6 @@ const availablePeople = (stationId: StationId) =>
   align-items: center;
   justify-content: center;
   gap: 8px;
-
-  & .stationInfo__content__item {
-    display: flex;
-    align-items: end;
-    gap: 8px;
-    color: var(--neutral-300);
-  }
 }
 
 .el-select {

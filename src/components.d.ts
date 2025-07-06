@@ -65,6 +65,7 @@ declare module 'vue' {
     ScheduleGeneration: typeof import('./components/stations/ScheduleGeneration.vue')['default']
     SettingsButton: typeof import('./components/settings/SettingsButton.vue')['default']
     SleepReport: typeof import('./components/reports/SleepReport.vue')['default']
+    StationInfoContent: typeof import('./components/stations/StationInfoContent.vue')['default']
     StationsList: typeof import('./components/stations/StationsList.vue')['default']
     StatisticBlock: typeof import('./components/statistics/StatisticBlock.vue')['default']
     TableButtonBlock: typeof import('./components/workers/TableButtonBlock.vue')['default']

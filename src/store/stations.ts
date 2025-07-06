@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 import { SideKey } from "~/components/stations/types";
-import { STATIONS } from "~/maintypes/types";
+import { StationId, STATIONS } from "~/maintypes/types";
+import { useWorkersStore } from "./workers";
 
 export const useStationsStore = defineStore("stations", {
   state: () => ({
     stations: STATIONS,
-    assignments: {} as Record<string, {left?:string | SideKey,right:string | SideKey}>,
+    assignments: {} as Record<string, { left?: string | SideKey; right: string | SideKey }>,
     loading: false,
     error: null as string | null,
   }),
@@ -15,18 +16,57 @@ export const useStationsStore = defineStore("stations", {
       const { addStation, removeStation, ...rest } = state.stations;
       return rest;
     },
-    getAssignment: (state) => (stationId: string, slotKey:SideKey) => {
-       return state.assignments[stationId]?.[slotKey] || "";
+    getAssignment: (state) => (stationId: string, slotKey: SideKey) => {
+      return state.assignments[stationId]?.[slotKey] || "";
     },
 
+    isAssignmentEmpty: (state) => !Object.keys(state.assignments).length,
   },
 
   actions: {
-    assignPerson(stationId: string, slotKey:SideKey, personId: string) {
+    getInitialState(slotKey: SideKey) {
+      return slotKey === "right" ? { right: "" } : { right: "", left: "" };
+    },
+    getStationsMandatoryAmount(amount: number) {
+      return amount === 1 ? "right" : "left";
+    },
+    removePerson(personId: string) {
+      if (this.isAssignmentEmpty) return;
 
-      if (!this.assignments[stationId]) this.assignments[stationId]= { right: "" };
+      for (const key in this.assignments) {
+        if (this.assignments[key]?.left === personId) {
+          this.assignments[key].left = "";
+          break;
+        }
+        if (this.assignments[key].right === personId) {
+          this.assignments[key].right = "";
+          break;
+        }
+      }
+    },
+
+    initializeStateFromWorkersStore() {
+      // const workersStore = useWorkersStore();
+      // workersStore.workers.forEach(({id,current_station})=>{
+      //  const side = this.getStationsMandatoryAmount(this.getStations[current_station]);
+      //  this.assignPerson(current_station,side,id);
+      // })
+    },
+
+    assignPerson(stationId: StationId, slotKey: SideKey, personId: string) {
+      this.assignments[stationId] ??= this.getInitialState(slotKey);
+
+      const workersStore = useWorkersStore();
+
+      this.removePerson(personId);
       this.assignments[stationId][slotKey] = personId;
+      workersStore.setCurrentStation(personId, stationId);
+    },
+    outerAssignByTable(stationId: StationId, slotKey: SideKey, personId: string) {
+      this.assignments[stationId] ??= this.getInitialState(slotKey);
 
+      this.removePerson(personId);
+      this.assignments[stationId][slotKey] = personId;
     },
   },
 });

@@ -1,8 +1,9 @@
 import { fa, th } from "element-plus/es/locales.mjs";
 import { defineStore } from "pinia";
 import { Ref } from "vue";
-import { Operator, UserCreationData } from "~/maintypes/types";
+import { Operator, StationNumber, UserCreationData } from "~/maintypes/types";
 import { supabase } from "~/utils/supabase";
+import { useStationsStore } from "./stations";
 
 interface State {
   workers: Operator[];
@@ -28,6 +29,36 @@ export const useWorkersStore = defineStore("workersStore", {
     getWorkersById(id: string) {
       return this.workers.find((worker) => worker.id === id);
     },
+    setCurrentStation(id: string, station: StationNumber) {
+      const workerIndex = this.workers.findIndex((e) => e.id === id);
+      this.workers[workerIndex].current_station = station;
+    },
+
+
+
+    handleWorkerStationVisiting(worker: Operator, station: StationNumber) {
+
+        worker.visited_stations ??= [];
+        worker.visited_stations.push(station);
+
+
+      if (worker.known_stations.every((e) => worker.visited_stations.includes(e))){
+
+      worker.visited_stations = [];
+      }
+    },
+
+    setWorkerHistory(id: string, station: StationNumber) {
+      const workerIndex = this.workers.findIndex((e) => e.id === id);
+      const worker = this.workers[workerIndex];
+
+      this.handleWorkerStationVisiting(worker, station);
+      const date = new Date();
+
+      worker.station_history ??= [];
+      worker.station_history.push({ station, date });
+    },
+
     getWorkers() {
       this.loading = true;
       this.error = null;
@@ -110,12 +141,33 @@ export const useWorkersStore = defineStore("workersStore", {
           (this.workers[indexWorker][key] as Operator[typeof key]) = field[key];
         });
 
+      const updateStationList = () => {
+        const store = useStationsStore();
+        const current = field?.current_station;
+
+        if (current) {
+          // rewrite!!!!
+          const checkStation = store.assignments[current];
+          const choseSide =
+            checkStation?.left && checkStation?.right
+              ? "left"
+              : !checkStation?.left && !checkStation?.right
+                ? "right"
+                : !checkStation?.left && checkStation?.right
+                  ? "left"
+                  : "right";
+
+          store.outerAssignByTable(current, choseSide, id);
+        }
+      };
+
       Promise.resolve(supabase.from("operatorslist").update(field).eq("id", id).select())
         .then(({ data, error }) => {
           if (!error) {
             console.log("Worker updated:", data);
             if (indexWorker !== -1) {
               updatedWorkerFields();
+              updateStationList();
             }
           } else {
             this.error = error.message;

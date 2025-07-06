@@ -117,16 +117,22 @@ const updateFormFromOperator = (operatorData: Operator) => {
   };
 };
 
-watch(
-  () => props.operatorId,
-  (newId) => {
-    if (newId) {
-      operator.value = store.getWorkersById(newId) as Operator;
-      updateFormFromOperator(operator.value);
-    }
-  },
-  { immediate: true },
-);
+// watch(
+//   () => props.operatorId,
+//   (newId) => {
+//     if (newId) {
+//       operator.value = store.getWorkersById(newId) as Operator;
+//       updateFormFromOperator(operator.value);
+//     }
+//   },
+//   { immediate: true },
+// );
+// refactoring required!!!!
+watch(dialogTableVisible, (n) => {
+  if (!n) return;
+  operator.value = store.getWorkersById(props.operatorId) as Operator;
+  updateFormFromOperator(operator.value);
+});
 
 watch(
   operator,

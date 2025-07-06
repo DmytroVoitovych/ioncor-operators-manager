@@ -32,7 +32,7 @@
 <script lang="ts" setup>
 import { InfoFilled } from "@element-plus/icons-vue";
 import { ref } from "vue";
-import { UserCreationData, UserStatus } from "~/maintypes/types";
+import { Status, UserCreationData } from "~/maintypes/types";
 import { useWorkersStore } from "~/store/workers";
 
 const store = useWorkersStore();
@@ -44,7 +44,7 @@ const newOperatorData = ref<UserCreationData>({
   name: "",
   surname: "",
   known_stations: [],
-  status: "available" as unknown as UserStatus,
+  status: "available" as Status,
 });
 
 const loadingHandler = (loadingState: boolean) => {

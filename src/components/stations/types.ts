@@ -1,3 +1,3 @@
-type SideKey = 'left' | 'right';
+type SideKey = "left" | "right";
 
-export {SideKey};
+export { SideKey };
