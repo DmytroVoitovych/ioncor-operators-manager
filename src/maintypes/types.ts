@@ -73,7 +73,7 @@ type Operator = User & {
   known_stations: StationNumber[];
   station_history: StationVisit[] | [];
   current_station: StationNumber;
-  visited_stations: StationNumber[] | [];
+  visited_stations: StationNumber[];
 };
 
 type UserCreationData = Pick<Operator, "name" | "surname" | "known_stations" | "status">;

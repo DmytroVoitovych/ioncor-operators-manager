@@ -34,17 +34,22 @@ export const useWorkersStore = defineStore("workersStore", {
       this.workers[workerIndex].current_station = station;
     },
 
+    removeVisitedStation(personId: string, station: StationNumber) {
+      const workerIndex = this.workers.findIndex((e) => e.id === personId);
+      const worker = this.workers[workerIndex];
 
+      if (!worker || !worker.visited_stations?.length) return;
+
+      const stationIndex = worker.visited_stations.indexOf(station);
+      if (stationIndex !== -1) worker.visited_stations.splice(stationIndex, 1);
+    },
 
     handleWorkerStationVisiting(worker: Operator, station: StationNumber) {
+      worker.visited_stations ??= [];
+      worker.visited_stations.push(station);
 
-        worker.visited_stations ??= [];
-        worker.visited_stations.push(station);
-
-
-      if (worker.known_stations.every((e) => worker.visited_stations.includes(e))){
-
-      worker.visited_stations = [];
+      if (worker.known_stations.every((e) => worker.visited_stations.includes(e))) {
+        worker.visited_stations = [worker.visited_stations.at(-1) as StationNumber];
       }
     },
 
@@ -56,7 +61,7 @@ export const useWorkersStore = defineStore("workersStore", {
       const date = new Date();
 
       worker.station_history ??= [];
-      worker.station_history.push({ station, date });
+       worker.station_history.push({ station, date });
     },
 
     getWorkers() {

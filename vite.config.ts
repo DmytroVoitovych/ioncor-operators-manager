@@ -30,6 +30,7 @@ export default defineConfig({
       dts: "src/typed-router.d.ts",
     }),
     Vue(),
+
     svgLoader({ defaultImport: "component" }),
     Components({
       // allow auto load markdown components under `./src/components/`
@@ -44,6 +45,13 @@ export default defineConfig({
       dts: "src/components.d.ts",
     }),
   ],
+  build: {
+    target: "esnext",
+  },
+
+  esbuild: {
+    target: "esnext",
+  },
 
   ssr: {
     // TODO: workaround until they support native ESM
