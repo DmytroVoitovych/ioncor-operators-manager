@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { computed, ref, toRaw, toRef, toRefs } from "vue";
-import { Operator, StationNumber } from "~/maintypes/types";
+import { Operator, StationNumber, STATIONS } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { SideKey } from "./types";
@@ -101,6 +101,65 @@ const generateSchedule = () => {
 
   };
 
+  const findWorkerAsLastResort = (
+     worker: Operator,
+      stationId: StationNumber,
+      availableWorkers: Operator[],
+      possibleStations: StationNumber[],
+  )=>{
+    const workerVSt = worker.visited_stations;
+    const giveNotLastVisited = (e:StationNumber) => e !== workerVSt.at(-1);
+
+    const preventRepeat = shuffle(workerVSt.filter(giveNotLastVisited));
+
+          const giveStaions = preventRepeat.length
+            ? preventRepeat
+            : shuffle(worker.known_stations.filter(giveNotLastVisited));
+
+          possibleStations.splice(0, possibleStations.length);
+          possibleStations.push(...giveStaions);
+
+          const checkStForPossibleAndKnown = (e: Operator) =>
+            e.known_stations.includes(stationId) &&
+            possibleStations.includes(e.current_station);
+
+          const newReplaceWith =
+            availableWorkers.find(
+              (e) =>
+                checkStForPossibleAndKnown(e) &&
+                !e.visited_stations?.includes(stationId),
+            ) ||
+            availableWorkers
+              .filter(checkStForPossibleAndKnown)
+              .toSorted(
+                (a, b) =>
+                  a.station_history.filter(e=>e.station === stationId).length
+                  - b.station_history.filter(e=>e.station === stationId).length,
+              )[0];
+
+              return newReplaceWith;
+  };
+
+  const  assignWorkerToStation = (workerId:string, targetStation:StationNumber,side:SideKey)=> {
+  stationsStore.assignPerson(
+    targetStation,
+    side,
+    workerId,
+  );
+  workersStore.setWorkerHistory(workerId, targetStation);
+};
+
+const  removeStationIfFull = (stationId:StationNumber, sts:typeof stations, stationsKeys:StationNumber[])=> {
+  const indexT = stationsKeys.findIndex((e) => e === stationId);
+
+  const checkSideAssignment = sts[stationId] === 2 && stationsStore.assignments[stationId]?.left &&
+    stationsStore.assignments[stationId]?.right
+
+  if (sts[stationId] === 1) stationsKeys.splice(indexT, 1);
+  if (checkSideAssignment) stationsKeys.splice(indexT, 1);
+}
+
+
   for (let index = 0; index < availableWorkers.value.length; index++) {
     for (let i = 0; i < stationsKeys.length; i++) {
       const stationId: StationNumber = stationsKeys[i];
@@ -121,93 +180,24 @@ const generateSchedule = () => {
         );
 
         if (!replaceWith) {
-          const preventRepeat = shuffle(
-            worker.visited_stations.filter((e) => e !== worker.visited_stations.at(-1)),
-          );
+        const newReplaceWith = findWorkerAsLastResort(worker, stationId, availableWorkers.value, possibleStations);
 
-          const giveStaions = preventRepeat.length
-            ? preventRepeat
-            : shuffle(worker.known_stations.filter((e) => e !== worker.visited_stations.at(-1)));
-          console.log(giveStaions, "giveStaions");
-          possibleStations.splice(0, possibleStations.length);
-          possibleStations.push(...giveStaions);
-
-          const newReplaceWith =
-            availableWorkers.value.find(
-              (e) =>
-                e.known_stations.includes(stationId) &&
-                possibleStations.includes(e.current_station) &&
-                !e.visited_stations?.includes(stationId),
-            ) ||
-            availableWorkers.value
-              .filter(
-                (e) =>
-                  e.known_stations.includes(stationId) &&
-                  possibleStations.includes(e.current_station),
-              )
-              .toSorted(
-                (a, b) =>
-                  a.visited_stations.indexOf(stationId) - b.visited_stations.indexOf(stationId),
-              )[0];
-          console.log(
-            `Worker ${worker.id} has already visited station ${stationId}, but no suitable replacement found, trying to find a new one...`,
-            possibleStations,
-            replaceWith,
-            newReplaceWith,
-          );
-          console.log(newReplaceWith, stationId, worker);
-
-          if (worker.name === "Alex") console.log(newReplaceWith, giveStaions, worker, "alex");
           if (!newReplaceWith) {
-            generateSchedule();
-            return;
+          generateSchedule();
+          return;
           }
 
           removePersonFromStation(newReplaceWith?.id, stationId);
-
-          stationsStore.assignPerson(
-            newReplaceWith?.current_station,
-            choseSide(newReplaceWith?.current_station),
-            worker.id,
-          );
-          workersStore.setWorkerHistory(worker.id, newReplaceWith?.current_station);
-
-          stationsStore.assignPerson(stationId, choseSide(stationId), newReplaceWith?.id);
-          workersStore.setWorkerHistory(newReplaceWith?.id, stationId);
-
-          const indexT = stationsKeys.findIndex((e) => e === stationId);
-
-          if (stations[stationId] === 1) stationsKeys.splice(indexT, 1);
-          if (
-            stations[stationId] === 2 &&
-            stationsStore.assignments[stationId]?.left &&
-            stationsStore.assignments[stationId]?.right
-          )
-            stationsKeys.splice(indexT, 1);
+          assignWorkerToStation(worker.id, newReplaceWith.current_station, choseSide(newReplaceWith.current_station));
+          assignWorkerToStation(newReplaceWith.id, stationId, choseSide(stationId));
+          removeStationIfFull(stationId, stations, stationsKeys);
           break;
         }
 
         removePersonFromStation(replaceWith?.id, stationId);
-
-        stationsStore.assignPerson(
-          replaceWith?.current_station,
-          choseSide(replaceWith?.current_station),
-          worker.id,
-        );
-        workersStore.setWorkerHistory(worker.id, replaceWith?.current_station);
-
-        stationsStore.assignPerson(stationId, choseSide(stationId), replaceWith?.id);
-        workersStore.setWorkerHistory(replaceWith?.id, stationId);
-
-        const indexT = stationsKeys.findIndex((e) => e === stationId);
-
-        if (stations[stationId] === 1) stationsKeys.splice(indexT, 1);
-        if (
-          stations[stationId] === 2 &&
-          stationsStore.assignments[stationId]?.left &&
-          stationsStore.assignments[stationId]?.right
-        )
-          stationsKeys.splice(indexT, 1);
+        assignWorkerToStation(worker.id, replaceWith.current_station, choseSide(replaceWith.current_station));
+        assignWorkerToStation(replaceWith.id, stationId, choseSide(stationId));
+        removeStationIfFull(stationId, stations, stationsKeys);
         break;
       }
 
@@ -223,147 +213,34 @@ const generateSchedule = () => {
           worker.id,
         );
 
-        console.log(replaceWith, stationsStore.assignments);
-
-        if (!replaceWith) {
-          const preventRepeat = shuffle(
-            worker.visited_stations.filter((e) => e !== worker.visited_stations.at(-1)),
-          );
-
-          const giveStaions = preventRepeat.length
-            ? preventRepeat
-            : shuffle(worker.known_stations.filter((e) => e !== worker.visited_stations.at(-1)));
-          console.log(giveStaions, "giveStaions");
-          possibleStations.splice(0, possibleStations.length);
-          possibleStations.push(...giveStaions);
-
-          const newReplaceWith =
-            availableWorkers.value.find(
-              (e) =>
-                e.known_stations.includes(stationId) &&
-                possibleStations.includes(e.current_station) &&
-                !e.visited_stations?.includes(stationId),
-            ) ||
-            availableWorkers.value
-              .filter(
-                (e) =>
-                  e.known_stations.includes(stationId) &&
-                  possibleStations.includes(e.current_station),
-              )
-              .toSorted(
-                (a, b) =>
-                  a.visited_stations.indexOf(stationId) - b.visited_stations.indexOf(stationId),
-              )[0];
-          console.log(
-            `Worker ${worker.id} has already visited station ${stationId}, but no suitable replacement found, trying to find a new one...`,
-            possibleStations,
-            replaceWith,
-            newReplaceWith,
-          );
-          console.log(newReplaceWith, stationId, worker);
+       if (!replaceWith) {
+          const newReplaceWith = findWorkerAsLastResort(worker, stationId, availableWorkers.value, possibleStations);
 
           if (!newReplaceWith) {
-            console.log("No suitable replacement found, restarting schedule generation...");
-
             generateSchedule();
             return;
           }
 
           removePersonFromStation(newReplaceWith?.id, stationId);
-
-          stationsStore.assignPerson(
-            newReplaceWith?.current_station,
-            choseSide(newReplaceWith?.current_station),
-            worker.id,
-          );
-          workersStore.setWorkerHistory(worker.id, newReplaceWith?.current_station);
-
-          stationsStore.assignPerson(stationId, choseSide(stationId), newReplaceWith?.id);
-          workersStore.setWorkerHistory(newReplaceWith?.id, stationId);
-
-          const indexT = stationsKeys.findIndex((e) => e === stationId);
-
-          if (stations[stationId] === 1) stationsKeys.splice(indexT, 1);
-          if (
-            stations[stationId] === 2 &&
-            stationsStore.assignments[stationId]?.left &&
-            stationsStore.assignments[stationId]?.right
-          )
-            stationsKeys.splice(indexT, 1);
-
+          assignWorkerToStation(worker.id, newReplaceWith.current_station, choseSide(newReplaceWith.current_station));
+          assignWorkerToStation(newReplaceWith.id, stationId, choseSide(stationId));
+          removeStationIfFull(stationId, stations, stationsKeys);
           break;
         }
 
         removePersonFromStation(replaceWith?.id, stationId);
-
-        stationsStore.assignPerson(
-          replaceWith?.current_station,
-          choseSide(replaceWith?.current_station),
-          worker.id,
-        );
-        workersStore.setWorkerHistory(worker.id, replaceWith?.current_station);
-
-        stationsStore.assignPerson(stationId, choseSide(stationId), replaceWith?.id);
-        workersStore.setWorkerHistory(replaceWith?.id, stationId);
-
-        const indexT = stationsKeys.findIndex((e) => e === stationId);
-
-        if (stations[stationId] === 1) stationsKeys.splice(indexT, 1);
-        if (
-          stations[stationId] === 2 &&
-          stationsStore.assignments[stationId]?.left &&
-          stationsStore.assignments[stationId]?.right
-        )
-          stationsKeys.splice(indexT, 1);
-
-        console.log(
-          `Worker ${worker} has already visited station ${stationId}, skipping...`,
-          possibleStations,
-          replaceWith,
-        );
-
+        assignWorkerToStation(worker.id, replaceWith.current_station, choseSide(replaceWith.current_station));
+        assignWorkerToStation(replaceWith.id, stationId, choseSide(stationId));
+        removeStationIfFull(stationId, stations, stationsKeys);
         break;
       }
 
       if (worker.visited_stations?.includes(stationId)) continue;
 
-      //  if(stationId === '170')console.log(worker,choseSide(stationId),stationId);
-      // console.log(i === (stationsKeys.length - 1) && !isKnown);
-
-      stationsStore.assignPerson(stationId, choseSide(stationId), worker.id);
-      workersStore.setWorkerHistory(worker.id, stationId);
-      const indexT = stationsKeys.findIndex((e) => e === stationId);
-
-      if (stations[stationId] === 1) stationsKeys.splice(indexT, 1);
-      if (
-        stations[stationId] === 2 &&
-        stationsStore.assignments[stationId]?.left &&
-        stationsStore.assignments[stationId]?.right
-      )
-        stationsKeys.splice(indexT, 1);
-
-      // if (stationsKeys.length && i === stationsKeys.length - 1) {
-      //   console.log(stationsKeys, "inside", worker);
-      // }
-
+      assignWorkerToStation(worker.id, stationId, choseSide(stationId));
+      removeStationIfFull(stationId, stations, stationsKeys);
       break;
     }
-  }
-
-  if (stationsKeys.length) {
-    // const stStore = stationsStore.assignments
-    // const unassigned = availableWorkers.value.filter((e) => e.current_station === "unassigned");
-    // const choosedWorkers: string[] = [];
-    // const replaceWorkers = stationsKeys.map((st, i) => {
-    //   const worker = availableWorkers.value.find(
-    //     (e) =>
-    //       e.known_stations.includes(st) &&
-    //       unassigned[i].known_stations.includes(e.current_station) &&
-    //       !choosedWorkers.includes(e.id),
-    //   );
-    //   if (worker) choosedWorkers.push(worker.id);
-    //   return worker;
-    // });
   }
 };
 </script>
