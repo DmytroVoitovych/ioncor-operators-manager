@@ -61,7 +61,7 @@ export const useWorkersStore = defineStore("workersStore", {
       const date = new Date();
 
       worker.station_history ??= [];
-       worker.station_history.push({ station, date });
+      worker.station_history.push({ station, date });
     },
 
     getWorkers() {

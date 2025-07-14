@@ -27,21 +27,34 @@
         </div>
       </el-form-item>
     </el-form>
-    <el-button size="large" class="scheduleButton" type="primary" @click="generateSchedule"
+    <el-button
+      ref="btn"
+      size="large"
+      class="scheduleButton"
+      type="primary"
+      @click="
+        () => {
+          console.time();
+          test();
+          console.timeEnd();
+          // count = 0;
+        }
+      "
       >Generate Schedule</el-button
     >
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRaw, toRef, toRefs } from "vue";
+import { computed, ref, toRaw, toRef, toRefs, useTemplateRef, watch } from "vue";
 import { Operator, StationNumber, STATIONS } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { SideKey } from "./types";
 import shuffle from "lodash.shuffle";
-import { de } from "element-plus/es/locales.mjs";
+import { de, te } from "element-plus/es/locales.mjs";
 import { c } from "node_modules/vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf";
+import { generateSchedule } from "./utils/scheduleGenerator";
 
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
@@ -49,6 +62,11 @@ const stationsStore = useStationsStore();
 const availableWorkers = computed(() =>
   workersStore.workers
     .filter((worker) => worker.status === "available")
+    // .toSorted(
+    //   (a, b) =>
+    //     a.station_history?.filter((st) => st.station === "130").length -
+    //     b.station_history?.filter((st) => st.station === "130").length,
+    // )
     .toSorted((a, b) => a.known_stations.length - b.known_stations.length),
 );
 const stations = stationsStore.getStations;
@@ -56,193 +74,23 @@ const stations = stationsStore.getStations;
 const radio = ref(2);
 const period = ref("1");
 const date = ref("");
+const btn = useTemplateRef("btn");
+const count = ref(0);
 
-const generateSchedule = () => {
-  stationsStore.assignments = {};
-  availableWorkers.value.forEach((worker) => (worker.current_station = "unassigned"));
-  const stationsKeys: StationNumber[] = shuffle(Object.keys(stations) as StationNumber[]);
+const test = () => {
+  count.value++;
 
-  const choseSide = (checkStation: StationNumber) => {
-    if (stations[checkStation] && stations[checkStation] === 2) {
-      return stationsStore.assignments[checkStation]?.left ? "right" : "left";
-    }
+  // for (let index = 0; index < 10000; index++) {
+    //  console.log("test", index);
+    generateSchedule(stationsStore, availableWorkers.value, stations);
+  // }
 
-    return "right";
-  };
-
-  const getPossibleStations = (worker: Operator) =>
-    shuffle(worker.known_stations.filter((e) => !worker.visited_stations?.includes(e)));
-
-  const removePersonFromStation = (personId: string, stationId: StationNumber) => {
-    stationsStore.removePerson(personId);
-    workersStore.removeVisitedStation(personId, stationId);
-  };
-
-  const getSuitableWorkersForReplacement = (
-    availableWorkers: Operator[],
-    stationId: StationNumber,
-    possibleStations: StationNumber[],
-    id: string,
-  ) => {
-    const workersWhoKnowBothStations = availableWorkers.filter(
-      (e) =>
-        e.known_stations.includes(stationId) && //if worker knows the station
-        e.known_stations.some((s) => possibleStations.includes(s)) &&
-        e.id !== id, //if worker knows one of the possible stations and is not the current worker
-    );
-
-    const idealWorker = workersWhoKnowBothStations.find(
-      (e) =>
-        possibleStations.includes(e.current_station) && //if worker is at a possible station
-        !e.visited_stations?.includes(stationId), //if worker has not visited the station yet
-    );
-
-     return idealWorker;
-
-  };
-
-  const findWorkerAsLastResort = (
-     worker: Operator,
-      stationId: StationNumber,
-      availableWorkers: Operator[],
-      possibleStations: StationNumber[],
-  )=>{
-    const workerVSt = worker.visited_stations;
-    const giveNotLastVisited = (e:StationNumber) => e !== workerVSt.at(-1);
-
-    const preventRepeat = shuffle(workerVSt.filter(giveNotLastVisited));
-
-          const giveStaions = preventRepeat.length
-            ? preventRepeat
-            : shuffle(worker.known_stations.filter(giveNotLastVisited));
-
-          possibleStations.splice(0, possibleStations.length);
-          possibleStations.push(...giveStaions);
-
-          const checkStForPossibleAndKnown = (e: Operator) =>
-            e.known_stations.includes(stationId) &&
-            possibleStations.includes(e.current_station);
-
-          const newReplaceWith =
-            availableWorkers.find(
-              (e) =>
-                checkStForPossibleAndKnown(e) &&
-                !e.visited_stations?.includes(stationId),
-            ) ||
-            availableWorkers
-              .filter(checkStForPossibleAndKnown)
-              .toSorted(
-                (a, b) =>
-                  a.station_history.filter(e=>e.station === stationId).length
-                  - b.station_history.filter(e=>e.station === stationId).length,
-              )[0];
-
-              return newReplaceWith;
-  };
-
-  const  assignWorkerToStation = (workerId:string, targetStation:StationNumber,side:SideKey)=> {
-  stationsStore.assignPerson(
-    targetStation,
-    side,
-    workerId,
-  );
-  workersStore.setWorkerHistory(workerId, targetStation);
+  if(count.value < 10000) test();
 };
 
-const  removeStationIfFull = (stationId:StationNumber, sts:typeof stations, stationsKeys:StationNumber[])=> {
-  const indexT = stationsKeys.findIndex((e) => e === stationId);
-
-  const checkSideAssignment = sts[stationId] === 2 && stationsStore.assignments[stationId]?.left &&
-    stationsStore.assignments[stationId]?.right
-
-  if (sts[stationId] === 1) stationsKeys.splice(indexT, 1);
-  if (checkSideAssignment) stationsKeys.splice(indexT, 1);
-}
-
-
-  for (let index = 0; index < availableWorkers.value.length; index++) {
-    for (let i = 0; i < stationsKeys.length; i++) {
-      const stationId: StationNumber = stationsKeys[i];
-      const worker = availableWorkers.value[index];
-      const isAssigned = stationsStore.getAssignment(
-        stationId,
-        choseSide(stationsStore.assignments[stationId]),
-      );
-      const isKnown = worker.known_stations.includes(stationId as StationNumber);
-
-      if (i === stationsKeys.length - 1 && !isKnown) {
-        const possibleStations = getPossibleStations(worker);
-        const replaceWith = getSuitableWorkersForReplacement(
-          availableWorkers.value,
-          stationId,
-          possibleStations,
-          worker.id,
-        );
-
-        if (!replaceWith) {
-        const newReplaceWith = findWorkerAsLastResort(worker, stationId, availableWorkers.value, possibleStations);
-
-          if (!newReplaceWith) {
-          generateSchedule();
-          return;
-          }
-
-          removePersonFromStation(newReplaceWith?.id, stationId);
-          assignWorkerToStation(worker.id, newReplaceWith.current_station, choseSide(newReplaceWith.current_station));
-          assignWorkerToStation(newReplaceWith.id, stationId, choseSide(stationId));
-          removeStationIfFull(stationId, stations, stationsKeys);
-          break;
-        }
-
-        removePersonFromStation(replaceWith?.id, stationId);
-        assignWorkerToStation(worker.id, replaceWith.current_station, choseSide(replaceWith.current_station));
-        assignWorkerToStation(replaceWith.id, stationId, choseSide(stationId));
-        removeStationIfFull(stationId, stations, stationsKeys);
-        break;
-      }
-
-      if (!isKnown) continue;
-
-      if (worker.visited_stations?.includes(stationId) && i === stationsKeys.length - 1) {
-        const possibleStations = getPossibleStations(worker);
-
-        const replaceWith = getSuitableWorkersForReplacement(
-          availableWorkers.value,
-          stationId,
-          possibleStations,
-          worker.id,
-        );
-
-       if (!replaceWith) {
-          const newReplaceWith = findWorkerAsLastResort(worker, stationId, availableWorkers.value, possibleStations);
-
-          if (!newReplaceWith) {
-            generateSchedule();
-            return;
-          }
-
-          removePersonFromStation(newReplaceWith?.id, stationId);
-          assignWorkerToStation(worker.id, newReplaceWith.current_station, choseSide(newReplaceWith.current_station));
-          assignWorkerToStation(newReplaceWith.id, stationId, choseSide(stationId));
-          removeStationIfFull(stationId, stations, stationsKeys);
-          break;
-        }
-
-        removePersonFromStation(replaceWith?.id, stationId);
-        assignWorkerToStation(worker.id, replaceWith.current_station, choseSide(replaceWith.current_station));
-        assignWorkerToStation(replaceWith.id, stationId, choseSide(stationId));
-        removeStationIfFull(stationId, stations, stationsKeys);
-        break;
-      }
-
-      if (worker.visited_stations?.includes(stationId)) continue;
-
-      assignWorkerToStation(worker.id, stationId, choseSide(stationId));
-      removeStationIfFull(stationId, stations, stationsKeys);
-      break;
-    }
-  }
-};
+watch(count, (newCount) => {
+ console.log(`Count updated: ${newCount}`);
+},{immediate:true});
 </script>
 
 <style scoped lang="scss">
