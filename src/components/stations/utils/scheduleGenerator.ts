@@ -7,17 +7,31 @@ import {
 import { assignWorkerToStation, removePersonFromStation } from "./stationAssignmentService";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
+//  const firstW =   availableWorkers.filter(e=>e.known_stations.includes('130')).toSorted(
+//       (a, b) =>
+//         a.station_history?.filter((st) => st.station === "130").length -
+//         b.station_history?.filter((st) => st.station === "130").length,
+//     )[0]; experimental if some problem will be detected sort will be removed
 
 const generateSchedule = (
   stationsStore: ReturnType<typeof useStationsStore>,
   availableWorkers: Operator[],
   stations: Record<StationNumber, number>,
 ) => {
-  stationsStore.assignments = {};
-  availableWorkers.forEach((worker) => (worker.current_station = "unassigned"));
-  const stationsKeys: StationNumber[] = shuffle(Object.keys(stations) as StationNumber[]);
+   const firstW =   availableWorkers.filter(e=>e.known_stations.includes('130')).toSorted(
+      (a, b) =>
+        a.station_history?.filter((st) => st.station === "130").length -
+        b.station_history?.filter((st) => st.station === "130").length,
+    )[0];
 
-  const choseSide = (checkStation: StationNumber) => {
+  const workersList = new Set(availableWorkers);
+
+  stationsStore.assignments = {};
+  workersList.forEach((worker) => (worker.current_station = "unassigned"));
+  const stationsKeys: StationNumber[] = ['130',...shuffle(Object.keys(stations) as StationNumber[]).filter(e=> e !== '130')];
+
+
+   const choseSide = (checkStation: StationNumber) => {
     if (stations[checkStation] && stations[checkStation] === 2) {
       return stationsStore.assignments[checkStation]?.left ? "right" : "left";
     }
@@ -44,15 +58,25 @@ const generateSchedule = (
     if (checkSideAssignment) stationsKeys.splice(indexT, 1);
   };
 
-  for (let index = 0; index < availableWorkers.length; index++) {
+   assignWorkerToStation(firstW.id, '130', 'right');
+   removeStationIfFull('130', stations, stationsKeys);
+   workersList.delete(firstW);
+
+
+
+   for (const worker of workersList) {
+
     for (let i = 0; i < stationsKeys.length; i++) {
       const stationId: StationNumber = stationsKeys[i];
-      const worker = availableWorkers[index];
+      // const worker = availableWorkers[index];
       const isKnown = worker.known_stations.includes(stationId as StationNumber);
+      const hardStationLimit = Math.ceil(14 / worker.known_stations.length) < 2?2:Math.ceil(14 / worker.known_stations.length);
 
-      // if(worker.current_station !== 'unassigned') {
-      //   debugger;
-      //   continue outer;}
+       if(worker?.visited_stations?.filter(e=> e === '130').length === hardStationLimit && stationId === '130' ){
+
+
+      };
+
       if (i === stationsKeys.length - 1 && !isKnown) {
         const possibleStations = getPossibleStations(worker);
         const replaceWith = getSuitableWorkersForReplacement(
@@ -84,7 +108,8 @@ const generateSchedule = (
                   b.station_history.filter((e) => e.station === stationId).length,
               )[0];
 
-            const stp = possibleStations.find((st) => stationsKeys.includes(st));
+              // added test for exluded 130
+            const stp = possibleStations.find((st) => stationsKeys.includes(st) && st !== '130');
             //  console.log(stp,possibleStations);
             //  useWorkersStore().setCurrentStation(test.id,stp);
             if (!stationsKeys.includes(stp)) {
@@ -133,7 +158,7 @@ const generateSchedule = (
 
       if (!isKnown) continue;
 
-      if (worker.visited_stations?.includes(stationId) && i === stationsKeys.length - 1) {
+      if ((worker.visited_stations?.includes(stationId) && i === stationsKeys.length - 1)) {
         const possibleStations = getPossibleStations(worker);
 
         const replaceWith = getSuitableWorkersForReplacement(
@@ -165,7 +190,8 @@ const generateSchedule = (
                   b.station_history.filter((e) => e.station === stationId).length,
               )[0];
 
-            const stp = possibleStations.find((st) => stationsKeys.includes(st));
+            // added test for exluded 130
+            const stp = possibleStations.find((st) => stationsKeys.includes(st) && st !== '130');
 
             if (!stationsKeys.includes(stp)) {
               //!!!!!!!!!!!!!!!
@@ -179,7 +205,7 @@ const generateSchedule = (
           assignWorkerToStation(test.id, stationId, choseSide(stationId));
           removeStationIfFull(stationId, stations, stationsKeys);
           break;
-             
+
             }
             assignWorkerToStation(worker.id, stp, choseSide(stp));
             removeStationIfFull(stp, stations, stationsKeys);
@@ -211,6 +237,7 @@ const generateSchedule = (
 
       if (worker.visited_stations?.includes(stationId)) continue;
 
+
       assignWorkerToStation(worker.id, stationId, choseSide(stationId));
       removeStationIfFull(stationId, stations, stationsKeys);
       break;
@@ -222,14 +249,7 @@ const generateSchedule = (
       workersStore.setWorkerHistory(worker.id, worker.current_station),
     );
   }
-  console.log(
-    availableWorkers
-      .filter((e) => e.known_stations.includes("130"))
-      .map(
-        (e) =>
-          `${e.name + "" + e.surname}:${e.station_history.slice(-20).filter((st) => st.station === "130").length}:known${e.known_stations.length}`,
-      ),
-  );
+
 };
 
 export { generateSchedule };

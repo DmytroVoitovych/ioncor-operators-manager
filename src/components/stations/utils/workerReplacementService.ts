@@ -31,8 +31,8 @@ const findWorkerAsLastResort = (
   availableWorkers: Operator[],
   possibleStations: StationNumber[],
 ) => {
-  const workerVSt = worker.visited_stations;
-  const giveNotLastVisited = (e: StationNumber) => e !== workerVSt.at(-1);
+  const workerVSt = worker.visited_stations; // added test for exluded 130
+  const giveNotLastVisited = (e: StationNumber) => e !== workerVSt.at(-1) && e !== '130';
 
   const preventRepeat = shuffle(workerVSt.filter(giveNotLastVisited));
 

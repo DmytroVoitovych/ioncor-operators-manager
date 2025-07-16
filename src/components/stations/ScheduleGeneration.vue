@@ -50,10 +50,6 @@ import { computed, ref, toRaw, toRef, toRefs, useTemplateRef, watch } from "vue"
 import { Operator, StationNumber, STATIONS } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
-import { SideKey } from "./types";
-import shuffle from "lodash.shuffle";
-import { de, te } from "element-plus/es/locales.mjs";
-import { c } from "node_modules/vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf";
 import { generateSchedule } from "./utils/scheduleGenerator";
 
 const workersStore = useWorkersStore();
@@ -78,15 +74,28 @@ const btn = useTemplateRef("btn");
 const count = ref(0);
 
 const test = () => {
-  count.value++;
+  // count.value++;
 
-  // for (let index = 0; index < 10000; index++) {
+  for (let index = 0; index < 4; index++) {
     //  console.log("test", index);
     generateSchedule(stationsStore, availableWorkers.value, stations);
-  // }
+    console.log(index);
+  if((index + 1) % 4 === 0){
 
-  if(count.value < 10000) test();
+    console.log(
+    availableWorkers.value
+      .filter((e) => e.known_stations.includes("130"))
+      .map(
+        (e) =>
+          `${e.name + "" + e.surname}:${e.station_history.slice(-20).filter((st) => st.station === "130").length}:known${e.known_stations.length}`,
+      )
+  );
+}
+  }
+
+  // if(count.value < 19) test();
 };
+/// 130 control station check tomorrow
 
 watch(count, (newCount) => {
  console.log(`Count updated: ${newCount}`);
