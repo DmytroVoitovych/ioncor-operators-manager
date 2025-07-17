@@ -3,16 +3,16 @@
     <h3>Schedule Generation</h3>
     <el-form label-position="top">
       <el-form-item label="Rotation settings">
-        <el-radio-group v-model="radio">
-          <el-radio :value="2">Every two hours</el-radio>
-          <el-radio :value="4">Every four hours</el-radio>
-          <el-radio :value="8">full day</el-radio>
+        <el-radio-group v-model="timeRotation">
+          <el-radio :value="4">Every two hours</el-radio>
+          <el-radio :value="2">Every four hours</el-radio>
+          <el-radio :value="1">full day</el-radio>
         </el-radio-group></el-form-item
       >
       <el-form-item label="Period Selection">
         <el-radio-group v-model="period">
-          <el-radio value="1">Day</el-radio>
-          <el-radio value="5">Week</el-radio>
+          <el-radio :value="1">Day</el-radio>
+          <el-radio :value="5">Week</el-radio>
         </el-radio-group>
         <div class="castomDateBlock">
           <span>Custom date period</span>
@@ -46,11 +46,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRaw, toRef, toRefs, useTemplateRef, watch } from "vue";
-import { Operator, StationNumber, STATIONS } from "~/maintypes/types";
+import { computed, ref, useTemplateRef, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { generateSchedule } from "./utils/scheduleGenerator";
+import { dayjs } from "element-plus";
+// import { Operator } from "~/maintypes/types";
 
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
@@ -58,48 +59,34 @@ const stationsStore = useStationsStore();
 const availableWorkers = computed(() =>
   workersStore.workers
     .filter((worker) => worker.status === "available")
-    // .toSorted(
-    //   (a, b) =>
-    //     a.station_history?.filter((st) => st.station === "130").length -
-    //     b.station_history?.filter((st) => st.station === "130").length,
-    // )
-    .toSorted((a, b) => a.known_stations.length - b.known_stations.length),
+    .toSorted((a, b) => a.known_stations.length - b.known_stations.length)
 );
 const stations = stationsStore.getStations;
 
-const radio = ref(2);
-const period = ref("1");
+const timeRotation = ref(2);
+const period = ref(1);
 const date = ref("");
 const btn = useTemplateRef("btn");
-const count = ref(0);
+const snapshotMap = new Map();
+
+const interationsAmount = computed<number>(() => timeRotation.value * period.value);
+
+const makeKey = (date: Date, rotation: number) =>
+  `${dayjs(date).format("YYYY-MM-DD")}_${rotation}`;
 
 const test = () => {
-  // count.value++;
+  const date = new Date();
 
-  for (let index = 0; index < 4; index++) {
-    //  console.log("test", index);
-    generateSchedule(stationsStore, availableWorkers.value, stations);
-    console.log(index);
-  if((index + 1) % 4 === 0){
-
-    console.log(
-    availableWorkers.value
-      .filter((e) => e.known_stations.includes("130"))
-      .map(
-        (e) =>
-          `${e.name + "" + e.surname}:${e.station_history.slice(-20).filter((st) => st.station === "130").length}:known${e.known_stations.length}`,
-      )
-  );
-}
+  for (let index = 0; index < interationsAmount.value; index++) {
+    const copy = generateSchedule(stationsStore, availableWorkers.value, stations);
+    snapshotMap.set(makeKey(date, index + 1), copy);
   }
 
-  // if(count.value < 19) test();
+  stationsStore.snapshot = Object.fromEntries(snapshotMap);
+  console.log(stationsStore.snapshot);
 };
-/// 130 control station check tomorrow
 
-watch(count, (newCount) => {
- console.log(`Count updated: ${newCount}`);
-},{immediate:true});
+watch(date, (n) => console.log(n));
 </script>
 
 <style scoped lang="scss">

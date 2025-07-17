@@ -1,12 +1,16 @@
 import { defineStore } from "pinia";
 import { SideKey } from "~/components/stations/types";
-import { StationId, STATIONS } from "~/maintypes/types";
+import { Operator, StationId, STATIONS } from "~/maintypes/types";
 import { useWorkersStore } from "./workers";
 
 export const useStationsStore = defineStore("stations", {
   state: () => ({
     stations: STATIONS,
     assignments: {} as Record<string, { left?: string | SideKey; right: string | SideKey }>,
+    snapshot:{} as Record<string,{
+      snp_workers:Operator[],
+      snp_stations:Record<string, { left?: string | SideKey; right: string | SideKey }>
+    }>,
     loading: false,
     error: null as string | null,
   }),

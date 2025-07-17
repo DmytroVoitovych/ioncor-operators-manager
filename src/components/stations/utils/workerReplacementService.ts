@@ -32,7 +32,7 @@ const findWorkerAsLastResort = (
   possibleStations: StationNumber[],
 ) => {
   const workerVSt = worker.visited_stations; // added test for exluded 130
-  const giveNotLastVisited = (e: StationNumber) => e !== workerVSt.at(-1) && e !== '130';
+  const giveNotLastVisited = (e: StationNumber) => e !== workerVSt.at(-1) && e !== "130";
 
   const preventRepeat = shuffle(workerVSt.filter(giveNotLastVisited));
 
@@ -63,4 +63,22 @@ const findWorkerAsLastResort = (
   return newReplaceWith;
 };
 
-export { getSuitableWorkersForReplacement, findWorkerAsLastResort };
+const findWorkerForSwap = (
+  stationId: StationNumber,
+  availableWorkers: Operator[],
+  possibleStations: StationNumber[],
+) =>
+  availableWorkers
+    .filter(
+      (e) =>
+        e.known_stations.includes(stationId) &&
+        !e.visited_stations.at(-1)?.includes(stationId) &&
+        e.known_stations.some((e) => possibleStations.includes(e)),
+    )
+    .toSorted(
+      (a, b) =>
+        a.station_history.filter((e) => e.station === stationId).length -
+        b.station_history.filter((e) => e.station === stationId).length,
+    )[0];
+
+export { getSuitableWorkersForReplacement, findWorkerAsLastResort, findWorkerForSwap };

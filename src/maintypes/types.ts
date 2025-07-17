@@ -44,7 +44,7 @@ export const STATIONS: StationCollection = {
 
 type StationNumber = Exclude<keyof typeof STATIONS, "addStation" | "removeStation">;
 
-type RequiredPeople = (typeof STATIONS)[StationNumber];
+// type RequiredPeople = (typeof STATIONS)[StationNumber];
 
 type UserStatus = {
   status: Status;
