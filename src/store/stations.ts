@@ -7,10 +7,13 @@ export const useStationsStore = defineStore("stations", {
   state: () => ({
     stations: STATIONS,
     assignments: {} as Record<string, { left?: string | SideKey; right: string | SideKey }>,
-    snapshot:{} as Record<string,{
-      snp_workers:Operator[],
-      snp_stations:Record<string, { left?: string | SideKey; right: string | SideKey }>
-    }>,
+    snapshot: {} as Record<
+      string,
+      {
+        snp_workers: Operator[];
+        snp_assignments: Record<string, { left?: string | SideKey; right: string | SideKey }>;
+      }
+    >,
     loading: false,
     error: null as string | null,
   }),
@@ -21,13 +24,19 @@ export const useStationsStore = defineStore("stations", {
       return rest;
     },
     getAssignment: (state) => (stationId: string, slotKey: SideKey) => {
-      return state.assignments[stationId]?.[slotKey] || "";
+      return state?.assignments?.[stationId]?.[slotKey] || "";
     },
+
+    getSnapshotMap: (state) => new Map(Object.entries(state.snapshot)),
 
     isAssignmentEmpty: (state) => !Object.keys(state.assignments).length,
   },
 
   actions: {
+    replaceAssignments(key:string){
+    if(!this.getSnapshotMap.get(key)?.snp_assignments) return;
+    this.assignments = this.getSnapshotMap.get(key)!.snp_assignments;
+    },
     getInitialState(slotKey: SideKey) {
       return slotKey === "right" ? { right: "" } : { right: "", left: "" };
     },

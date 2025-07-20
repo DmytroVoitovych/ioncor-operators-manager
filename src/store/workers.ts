@@ -26,6 +26,10 @@ export const useWorkersStore = defineStore("workersStore", {
     // },
   },
   actions: {
+      replaceWorkers(snapShot:Operator[]){
+    if(!snapShot.length) return;
+    this.workers = snapShot;
+    },
     getWorkersById(id: string) {
       return this.workers.find((worker) => worker.id === id);
     },

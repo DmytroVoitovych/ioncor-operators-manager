@@ -11,18 +11,43 @@
       >
       <el-form-item label="Period Selection">
         <el-radio-group v-model="period">
-          <el-radio :value="1">Day</el-radio>
-          <el-radio :value="5">Week</el-radio>
+          <el-radio
+            :value="1"
+            @click="
+              () => {
+                if (date) date = [];
+              }
+            "
+            >Day</el-radio
+          >
+          <el-radio
+            :value="9"
+            @click="
+              () => {
+                if (date) date = [];
+              }
+            "
+            >Week</el-radio
+          >
         </el-radio-group>
         <div class="castomDateBlock">
           <span>Custom date period</span>
           <el-date-picker
-            v-model="date"
+            v-model="date as []"
             type="daterange"
             range-separator="To"
             start-placeholder="Start date"
             end-placeholder="End date"
             :editable="false"
+            @change="
+              (e: [Date, Date] | null) => {
+                if (!e) return;
+                const startDate = dayjs(e[0]);
+                const endDate = dayjs(e[1]);
+                console.log(endDate.diff(startDate, 'day'));
+                period = endDate.diff(startDate, 'day') + 1;
+              }
+            "
           />
         </div>
       </el-form-item>
@@ -35,7 +60,7 @@
       @click="
         () => {
           console.time();
-          test();
+          test(date?.[0]);
           console.timeEnd();
           // count = 0;
         }
@@ -46,12 +71,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { computed, ref } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { generateSchedule } from "./utils/scheduleGenerator";
 import { dayjs } from "element-plus";
-// import { Operator } from "~/maintypes/types";
+import { FIRST_LIST } from "./constants";
 
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
@@ -59,34 +84,50 @@ const stationsStore = useStationsStore();
 const availableWorkers = computed(() =>
   workersStore.workers
     .filter((worker) => worker.status === "available")
-    .toSorted((a, b) => a.known_stations.length - b.known_stations.length)
+    .toSorted((a, b) => a.known_stations.length - b.known_stations.length),
 );
+
 const stations = stationsStore.getStations;
 
 const timeRotation = ref(2);
 const period = ref(1);
-const date = ref("");
-const btn = useTemplateRef("btn");
+const date = ref<Date[]>([]);
 const snapshotMap = new Map();
+
+const disabledDate = (date: Date) => {
+  const day = dayjs(date).day();
+  return day === 0 || day === 6;
+};
 
 const interationsAmount = computed<number>(() => timeRotation.value * period.value);
 
-const makeKey = (date: Date, rotation: number) =>
-  `${dayjs(date).format("YYYY-MM-DD")}_${rotation}`;
+const makeKey = (date: Date, rotation: number) => `${dayjs(date).format("YYYY-MM-DD")}_${rotation}`;
 
-const test = () => {
-  const date = new Date();
+const test = (start?: Date) => {
+
+  let num = 0;
+  let date = start || new Date();
 
   for (let index = 0; index < interationsAmount.value; index++) {
     const copy = generateSchedule(stationsStore, availableWorkers.value, stations);
-    snapshotMap.set(makeKey(date, index + 1), copy);
+    num++;
+    if (!disabledDate(date as Date) || disabledDate(dayjs().toDate()))
+      snapshotMap.set(makeKey(date as Date, num), copy);
+
+    if (num === timeRotation.value) {
+      num = 0;
+      date = dayjs(date).add(1, "day").toDate();
+    }
   }
 
-  stationsStore.snapshot = Object.fromEntries(snapshotMap);
-  console.log(stationsStore.snapshot);
-};
+  const defaultDate = start || new Date;
+  const defaultRotation = +FIRST_LIST.slice(-1);
+  const defaultKey = makeKey(defaultDate,defaultRotation);
 
-watch(date, (n) => console.log(n));
+  stationsStore.snapshot = Object.fromEntries(snapshotMap);
+  stationsStore.replaceAssignments(defaultKey);
+  workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
+};
 </script>
 
 <style scoped lang="scss">

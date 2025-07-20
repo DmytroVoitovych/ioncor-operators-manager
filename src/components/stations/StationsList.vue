@@ -1,8 +1,9 @@
 <template>
   <el-card>
     <template #header>
-      <div class="card-header"></div>
+      <StationHeader />
     </template>
+
     <ul class="stationsList">
       <li class="stationItem" v-for="(station, key) in store.getStations" :key="key">
         <el-select
@@ -64,6 +65,9 @@ const Right_SIDE_KEY = "right";
 
 const operatorStore = useWorkersStore();
 const store = useStationsStore();
+
+// const stationStore = useStationsStore();
+// const mapList = new Map(Object.entries(stationStore.snapshot));
 
 const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({

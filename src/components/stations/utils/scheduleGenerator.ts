@@ -35,8 +35,10 @@ const generateSchedule = (
 
   stationsStore.assignments = {};
   workersList.forEach((worker) => (worker.current_station = "unassigned" as StationNumber));
-  const shuffledStations = shuffle(Object.keys(stations) as StationNumber[]).filter((e) => e !== station_130);
-  const stationsKeys: StationNumber[] = [station_130,...shuffledStations];
+  const shuffledStations = shuffle(Object.keys(stations) as StationNumber[]).filter(
+    (e) => e !== station_130,
+  );
+  const stationsKeys: StationNumber[] = [station_130, ...shuffledStations];
 
   const choseSide = (checkStation: StationNumber) => {
     if (stations[checkStation] && stations[checkStation] === 2) {
@@ -75,9 +77,9 @@ const generateSchedule = (
       const stationId: StationNumber = stationsKeys[i];
       const isKnown = worker.known_stations.includes(stationId as StationNumber);
       const isVisited = worker.visited_stations?.includes(stationId);
-      const requiresSwapForLastStation  = i === stationsKeys.length - 1 && (!isKnown || isVisited);
+      const requiresSwapForLastStation = i === stationsKeys.length - 1 && (!isKnown || isVisited);
 
-      if (requiresSwapForLastStation ) {
+      if (requiresSwapForLastStation) {
         const possibleStations = getPossibleStations(worker);
         const replaceWith = getSuitableWorkersForReplacement(
           availableWorkers,
@@ -102,7 +104,9 @@ const generateSchedule = (
             );
 
             // added test for exluded 130
-            const stp = possibleStations.find((st) => stationsKeys.includes(st) && st !== station_130)!;
+            const stp = possibleStations.find(
+              (st) => stationsKeys.includes(st) && st !== station_130,
+            )!;
 
             if (stp && !stationsKeys.includes(stp)) {
               //!!!!!!!!!!!!!!!
@@ -155,19 +159,15 @@ const generateSchedule = (
     }
   }
 
+  const workersStore = useWorkersStore();
+  availableWorkers.forEach((worker) =>
+    workersStore.setWorkerHistory(worker.id, worker.current_station),
+  );
 
-
-
-    const workersStore = useWorkersStore();
-    availableWorkers.forEach((worker) =>
-      workersStore.setWorkerHistory(worker.id, worker.current_station),
-    );
-
-    return ({
-      snp_workers: structuredClone(toRaw(workersStore.workers)),
-      snp_assignments: structuredClone(toRaw(stationsStore.assignments))
-    });
-
+  return {
+    snp_workers: structuredClone(toRaw(workersStore.workers)),
+    snp_assignments: structuredClone(toRaw(stationsStore.assignments)),
+  };
 };
 
 export { generateSchedule };
