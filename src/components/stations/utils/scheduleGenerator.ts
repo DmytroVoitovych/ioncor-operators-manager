@@ -21,6 +21,7 @@ const generateSchedule = (
   stationsStore: ReturnType<typeof useStationsStore>,
   availableWorkers: Operator[],
   stations: Record<StationNumber, number>,
+  date:Date
 ) => {
   const station_130 = "130";
   const station130Worker = availableWorkers
@@ -55,6 +56,7 @@ const generateSchedule = (
     stationId: StationNumber,
     sts: typeof stations,
     stationsKeys: StationNumber[],
+
   ) => {
     const indexT = stationsKeys.findIndex((e) => e === stationId);
 
@@ -161,8 +163,11 @@ const generateSchedule = (
 
   const workersStore = useWorkersStore();
   availableWorkers.forEach((worker) =>
-    workersStore.setWorkerHistory(worker.id, worker.current_station),
+    workersStore.setWorkerHistory(worker.id, worker.current_station,date),
   );
+
+  if(stationsKeys.length)stationsStore.enable_extra = true;
+  if(!stationsKeys.length && stationsStore.enable_extra)stationsStore.enable_extra = false;
 
   return {
     snp_workers: structuredClone(toRaw(workersStore.workers)),

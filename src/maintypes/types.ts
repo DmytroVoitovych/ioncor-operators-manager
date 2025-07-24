@@ -14,6 +14,7 @@ interface StationMap {
 
 interface StationCollection extends StationMap {
   addStation(name: string, requiredPeople: number): void;
+  changeRequiredPeople(name: string, requiredPeople: number): void;
   removeStation(name: string): void;
 }
 
@@ -36,13 +37,15 @@ export const STATIONS: StationCollection = {
   addStation(name: StationId, requiredPeople: number) {
     this[name] = requiredPeople;
   },
-
   removeStation(name: StationId) {
     delete this[name];
   },
+  changeRequiredPeople(name:StationId,requiredPeople:number){
+    this[name] = requiredPeople
+  }
 };
 
-type StationNumber = Exclude<keyof typeof STATIONS, "addStation" | "removeStation">;
+type StationNumber = Exclude<keyof typeof STATIONS, "addStation" | "removeStation" | "changeRequiredPeople">;
 
 // type RequiredPeople = (typeof STATIONS)[StationNumber];
 

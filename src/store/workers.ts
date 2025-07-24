@@ -4,6 +4,7 @@ import { Ref } from "vue";
 import { Operator, StationNumber, UserCreationData } from "~/maintypes/types";
 import { supabase } from "~/utils/supabase";
 import { useStationsStore } from "./stations";
+import { dayjs } from "element-plus";
 
 interface State {
   workers: Operator[];
@@ -19,6 +20,7 @@ export const useWorkersStore = defineStore("workersStore", {
   }),
 
   getters: {
+ 
     // getWorkersById: (state) => {
     //   return (id: string): Operator | undefined => {
     //     return state.workers.find((worker) => worker.id === id);
@@ -26,9 +28,9 @@ export const useWorkersStore = defineStore("workersStore", {
     // },
   },
   actions: {
-      replaceWorkers(snapShot:Operator[]){
-    if(!snapShot.length) return;
-    this.workers = snapShot;
+    replaceWorkers(snapShot: Operator[]) {
+      if (!snapShot.length) return;
+      this.workers = snapShot;
     },
     getWorkersById(id: string) {
       return this.workers.find((worker) => worker.id === id);
@@ -57,15 +59,15 @@ export const useWorkersStore = defineStore("workersStore", {
       }
     },
 
-    setWorkerHistory(id: string, station: StationNumber) {
+    setWorkerHistory(id: string, station: StationNumber,date:Date) {
       const workerIndex = this.workers.findIndex((e) => e.id === id);
       const worker = this.workers[workerIndex];
 
       this.handleWorkerStationVisiting(worker, station);
-      const date = new Date();
 
       worker.station_history ??= [];
       worker.station_history.push({ station, date });
+
     },
 
     getWorkers() {

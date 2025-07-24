@@ -14,17 +14,18 @@ export const useStationsStore = defineStore("stations", {
         snp_assignments: Record<string, { left?: string | SideKey; right: string | SideKey }>;
       }
     >,
+    enable_extra:false,
     loading: false,
     error: null as string | null,
   }),
 
   getters: {
     getStations: (state) => {
-      const { addStation, removeStation, ...rest } = state.stations;
+      const { addStation, removeStation, changeRequiredPeople, ...rest } = state.stations;
       return rest;
     },
     getAssignment: (state) => (stationId: string, slotKey: SideKey) => {
-      return state?.assignments?.[stationId]?.[slotKey] || "";
+      return state?.assignments?.[stationId]?.[slotKey] || (state.enable_extra?"Extra":"");
     },
 
     getSnapshotMap: (state) => new Map(Object.entries(state.snapshot)),
@@ -33,9 +34,9 @@ export const useStationsStore = defineStore("stations", {
   },
 
   actions: {
-    replaceAssignments(key:string){
-    if(!this.getSnapshotMap.get(key)?.snp_assignments) return;
-    this.assignments = this.getSnapshotMap.get(key)!.snp_assignments;
+    replaceAssignments(key: string) {
+      if (!this.getSnapshotMap.get(key)?.snp_assignments) return;
+      this.assignments = this.getSnapshotMap.get(key)!.snp_assignments;
     },
     getInitialState(slotKey: SideKey) {
       return slotKey === "right" ? { right: "" } : { right: "", left: "" };

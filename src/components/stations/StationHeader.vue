@@ -1,6 +1,6 @@
 <template>
   <div class="card-header">
-    <h2 v-show="options.length" class="text-preset-6">Shift segments:</h2>
+    <h2 class="text-preset-6">Generated schedule for {{ now }}</h2>
     <el-date-picker
       v-model="now"
       type="date"
@@ -8,6 +8,7 @@
       value-format="YYYY-MM-DD"
       :disabled-date="setDisabledDate"
     />
+    <h2 v-show="options.length" class="text-preset-6">Shift time slot segments:</h2>
     <el-segmented
       aria-label="Shift segments"
       v-model="timeSlot"
@@ -25,7 +26,6 @@ import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { FIRST_LIST, ONE_DAY } from "./constants";
 
-
 const stationStore = useStationsStore();
 const workerStore = useWorkersStore();
 const now = ref(dayjs().format("YYYY-MM-DD"));
@@ -39,20 +39,19 @@ const props = {
 
 const options = computed(() => {
   if (!getSnapshotMap.value.size || getSnapshotMap.value.size === 1) return [];
-  return getSnapshotMap.value
-    .keys()
-    .reduce((acc: Record<string, string>[], key: string) => {
-      const optObj = { period: `${key.at(-1)} time slot `, map_key: key };
+  return getSnapshotMap.value.keys().reduce((acc: Record<string, string>[], key: string) => {
+    const optObj = { period: `${key.at(-1)} time slot `, map_key: key };
 
-      if (key.includes(now.value)) acc.push(optObj);
-      return acc;
-    }, []);
+    if (key.includes(now.value)) acc.push(optObj);
+    return acc;
+  }, []);
 });
 
-const setDisabledDate = (time:Date)=>{
-   return time.getTime() < Date.now() - ONE_DAY
-   ||
-    !getSnapshotMap.value.keys().find(key=> key.includes(dayjs(time).format("YYYY-MM-DD")));
+const setDisabledDate = (time: Date) => {
+  return (
+    time.getTime() < Date.now() - ONE_DAY ||
+    !getSnapshotMap.value.keys().find((key) => key.includes(dayjs(time).format("YYYY-MM-DD")))
+  );
 };
 
 const timeSlot = ref<string | undefined>(now.value + FIRST_LIST);
@@ -65,15 +64,17 @@ watch([timeSlot, now], () => {
   stationStore.replaceAssignments(key.value);
 });
 
-watch(()=>stationStore.snapshot,(n,p)=>{
-const setPrev = new Set(Object.keys(n));
-const setNew = new Set(Object.keys(p));
-const differ =  setPrev.difference(setNew);
-const defaultDate = differ.keys().next().value?.split('_')[0] || now.value;
+watch(
+  () => stationStore.snapshot,
+  (n, p) => {
+    const setPrev = new Set(Object.keys(n));
+    const setNew = new Set(Object.keys(p));
+    const differ = setPrev.difference(setNew);
+    const defaultDate = differ.keys().next().value?.split("_")[0] || now.value;
 
-if(differ.has(key.value)) return;
-now.value = defaultDate;
-timeSlot.value = differ.keys().next().value;
-
-});
+    if (differ.has(key.value)) return;
+    now.value = defaultDate;
+    timeSlot.value = differ.keys().next().value;
+  },
+);
 </script>
