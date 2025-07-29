@@ -33,15 +33,15 @@
         <div class="castomDateBlock">
           <span>Custom date period</span>
           <el-date-picker
-            v-model="(date as [])"
+            v-model="date as []"
             type="daterange"
             range-separator="To"
             start-placeholder="Start date"
             end-placeholder="End date"
-            :disabled-date="(time:Date)=>time.getTime() < Date.now() - ONE_DAY"
+            :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY"
             :editable="false"
             @change="
-            (e: [Date, Date] | null) => {
+              (e: [Date, Date] | null) => {
                 if (!e) return;
                 const startDate = dayjs(e[0]);
                 const endDate = dayjs(e[1]);
@@ -49,7 +49,7 @@
                 period = endDate.diff(startDate, 'day') + 1;
               }
             "
-              />
+          />
         </div>
       </el-form-item>
     </el-form>
@@ -61,7 +61,7 @@
       @click="
         () => {
           console.time();
-          test(date?.[0]);
+          test(date?.[0] || hederDate);
           console.timeEnd();
           // count = 0;
         }
@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref,toRaw,watch } from "vue";
+import { computed, ref, toRaw, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { generateSchedule } from "./utils/scheduleGenerator";
@@ -83,6 +83,8 @@ import { Operator } from "~/maintypes/types";
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
 
+defineProps<{ hederDate: string }>();
+
 const availableWorkers = computed(() =>
   workersStore.workers
     .filter((worker) => worker.status === "available")
@@ -91,10 +93,9 @@ const availableWorkers = computed(() =>
 
 const stations = stationsStore.getStations;
 
-const absentAmount = computed(()=>
- Object.values(stations).reduce((acc,st)=>acc + st ,0) - availableWorkers.value.length
+const absentAmount = computed(
+  () => Object.values(stations).reduce((acc, st) => acc + st, 0) - availableWorkers.value.length,
 );
-
 
 const timeRotation = ref(2);
 const period = ref(1);
@@ -110,23 +111,22 @@ const interationsAmount = computed<number>(() => timeRotation.value * period.val
 
 const makeKey = (date: Date, rotation: number) => `${dayjs(date).format("YYYY-MM-DD")}_${rotation}`;
 
-const rewriteHistory = (workers:Operator[],date:Date) =>{
-const cycleDate = dayjs(date).format('YYYY-MM-DD');
-workers.forEach(worker => {
-    if(!worker.station_history?.length || worker.status !== 'available') return;
-     worker.station_history =  worker.station_history
-        ?.filter((entry) => !dayjs(entry.date).format('YYYY-MM-DD').includes(cycleDate))
-        .toSorted((a, b) =>  dayjs(a.date).toDate().getTime() - dayjs(b.date).toDate().getTime() );
-    });
+const rewriteHistory = (workers: Operator[], date: Date) => {
+  const cycleDate = dayjs(date).format("YYYY-MM-DD");
+  workers.forEach((worker) => {
+    if (!worker.station_history?.length || worker.status !== "available") return;
+    worker.station_history = worker.station_history
+      ?.filter((entry) => !dayjs(entry.date).format("YYYY-MM-DD").includes(cycleDate))
+      .toSorted((a, b) => dayjs(a.date).toDate().getTime() - dayjs(b.date).toDate().getTime());
+  });
 };
 
-const rewriteSnapshot =(date:Date)=>{
-  const cycleDate = dayjs(date).format('YYYY-MM-DD');
-   for (const [key] of stationsStore.getSnapshotMap) {
-    
+const rewriteSnapshot = (date: Date) => {
+  const cycleDate = dayjs(date).format("YYYY-MM-DD");
+  for (const [key] of stationsStore.getSnapshotMap) {
     if (key.startsWith(cycleDate)) delete stationsStore.snapshot[key];
-
-}};
+  }
+};
 
 const test = (start?: Date) => {
   snapshotMap.clear();
@@ -135,11 +135,16 @@ const test = (start?: Date) => {
   let date = start || new Date();
 
   for (let index = 0; index < interationsAmount.value; index++) {
-    if(!num) {
-    rewriteHistory(toRaw(workersStore.workers),date);
-    rewriteSnapshot(date);
-  }
-    const copy = generateSchedule(stationsStore, availableWorkers.value, stationsStore.getStations,date);
+    if (!num) {
+      rewriteHistory(toRaw(workersStore.workers), date);
+      rewriteSnapshot(date);
+    }
+    const copy = generateSchedule(
+      stationsStore,
+      availableWorkers.value,
+      stationsStore.getStations,
+      date,
+    );
     num++;
 
     if (!disabledDate(date as Date) || disabledDate(dayjs().toDate()))
@@ -156,16 +161,21 @@ const test = (start?: Date) => {
   const defaultRotation = +FIRST_LIST.slice(-1);
   const defaultKey = makeKey(defaultDate, defaultRotation);
 
-  stationsStore.snapshot = Object.assign(stationsStore.snapshot,Object.fromEntries(snapshotMap));
+  stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
   stationsStore.replaceAssignments(defaultKey);
   workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
 };
 
-watch(absentAmount,(n)=>{
-  if(stationsStore.stations["200"] === 1 && !n) stationsStore.stations.changeRequiredPeople("200",2);
-  if(n) stationsStore.stations.changeRequiredPeople("200",1);
-  console.log(stationsStore.getStations);
-},{immediate:true});
+watch(
+  absentAmount,
+  (n) => {
+    if (stationsStore.stations["200"] === 1 && !n)
+      stationsStore.stations.changeRequiredPeople("200", 2);
+    if (n) stationsStore.stations.changeRequiredPeople("200", 1);
+    console.log(stationsStore.getStations);
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped lang="scss">

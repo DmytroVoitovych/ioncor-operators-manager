@@ -28,7 +28,7 @@ import { FIRST_LIST, ONE_DAY } from "./constants";
 
 const stationStore = useStationsStore();
 const workerStore = useWorkersStore();
-const now = ref(dayjs().format("YYYY-MM-DD"));
+const now = defineModel("now", { default: dayjs().format("YYYY-MM-DD") });
 
 const { getSnapshotMap } = storeToRefs(stationStore);
 
@@ -55,26 +55,17 @@ const setDisabledDate = (time: Date) => {
 };
 
 const timeSlot = ref<string | undefined>(now.value + FIRST_LIST);
-const key = computed(() => now.value + timeSlot.value?.slice(-2));
+const key = computed(() => now.value + (timeSlot.value?.slice(-2) || FIRST_LIST));
 
 watch([timeSlot, now], () => {
   if (!getSnapshotMap.value.has(key.value)) return;
-
+  timeSlot.value = key.value;
   workerStore.replaceWorkers(getSnapshotMap.value.get(key.value)!.snp_workers);
   stationStore.replaceAssignments(key.value);
 });
 
-watch(
-  () => stationStore.snapshot,
-  (n, p) => {
-    const setPrev = new Set(Object.keys(n));
-    const setNew = new Set(Object.keys(p));
-    const differ = setPrev.difference(setNew);
-    const defaultDate = differ.keys().next().value?.split("_")[0] || now.value;
+watch(key,(n)=>{
+workerStore.setGlobalKey(n);
+},{immediate:true});
 
-    if (differ.has(key.value)) return;
-    now.value = defaultDate;
-    timeSlot.value = differ.keys().next().value;
-  },
-);
 </script>

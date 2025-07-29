@@ -40,12 +40,15 @@ export const STATIONS: StationCollection = {
   removeStation(name: StationId) {
     delete this[name];
   },
-  changeRequiredPeople(name:StationId,requiredPeople:number){
-    this[name] = requiredPeople
-  }
+  changeRequiredPeople(name: StationId, requiredPeople: number) {
+    this[name] = requiredPeople;
+  },
 };
 
-type StationNumber = Exclude<keyof typeof STATIONS, "addStation" | "removeStation" | "changeRequiredPeople">;
+type StationNumber = Exclude<
+  keyof typeof STATIONS,
+  "addStation" | "removeStation" | "changeRequiredPeople"
+>;
 
 // type RequiredPeople = (typeof STATIONS)[StationNumber];
 

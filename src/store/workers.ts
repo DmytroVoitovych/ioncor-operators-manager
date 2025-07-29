@@ -10,6 +10,7 @@ interface State {
   workers: Operator[];
   loading: boolean;
   error: string | null;
+  globalKey:string,
 }
 
 export const useWorkersStore = defineStore("workersStore", {
@@ -17,10 +18,10 @@ export const useWorkersStore = defineStore("workersStore", {
     workers: [],
     loading: false,
     error: null,
+    globalKey:'',
   }),
 
   getters: {
- 
     // getWorkersById: (state) => {
     //   return (id: string): Operator | undefined => {
     //     return state.workers.find((worker) => worker.id === id);
@@ -28,6 +29,9 @@ export const useWorkersStore = defineStore("workersStore", {
     // },
   },
   actions: {
+    setGlobalKey(key:string){
+     this.globalKey = key;
+    },
     replaceWorkers(snapShot: Operator[]) {
       if (!snapShot.length) return;
       this.workers = snapShot;
@@ -59,7 +63,7 @@ export const useWorkersStore = defineStore("workersStore", {
       }
     },
 
-    setWorkerHistory(id: string, station: StationNumber,date:Date) {
+    setWorkerHistory(id: string, station: StationNumber, date: Date) {
       const workerIndex = this.workers.findIndex((e) => e.id === id);
       const worker = this.workers[workerIndex];
 
@@ -67,7 +71,6 @@ export const useWorkersStore = defineStore("workersStore", {
 
       worker.station_history ??= [];
       worker.station_history.push({ station, date });
-
     },
 
     getWorkers() {
@@ -149,7 +152,7 @@ export const useWorkersStore = defineStore("workersStore", {
       const indexWorker = this.workers.findIndex((worker) => worker.id === id);
       const updatedWorkerFields = () =>
         (Object.keys(field) as (keyof Operator)[]).forEach((key) => {
-          (this.workers[indexWorker][key] as Operator[typeof key]) = field[key];
+         if(key !== 'current_station') (this.workers[indexWorker][key] as Operator[typeof key]) = field[key];
         });
 
       const updateStationList = () => {
@@ -157,8 +160,7 @@ export const useWorkersStore = defineStore("workersStore", {
         const current = field?.current_station;
 
         if (current) {
-          // rewrite!!!!
-          const checkStation = store.assignments[current];
+        const checkStation = store.assignments[current];
           const choseSide =
             checkStation?.left && checkStation?.right
               ? "left"

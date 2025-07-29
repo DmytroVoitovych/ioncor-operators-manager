@@ -1,7 +1,10 @@
 import { defineStore } from "pinia";
 import { SideKey } from "~/components/stations/types";
-import { Operator, StationId, STATIONS } from "~/maintypes/types";
+import { Operator, StationId, StationNumber, STATIONS } from "~/maintypes/types";
 import { useWorkersStore } from "./workers";
+import { removePersonFromStation } from "~/components/stations/utils/stationAssignmentService";
+import { findWorkerById, isExtraAssignment } from "~/components/stations/utils/workerUtils";
+import { dayjs } from "element-plus";
 
 export const useStationsStore = defineStore("stations", {
   state: () => ({
@@ -14,7 +17,7 @@ export const useStationsStore = defineStore("stations", {
         snp_assignments: Record<string, { left?: string | SideKey; right: string | SideKey }>;
       }
     >,
-    enable_extra:false,
+    enable_extra: false,
     loading: false,
     error: null as string | null,
   }),
@@ -25,7 +28,7 @@ export const useStationsStore = defineStore("stations", {
       return rest;
     },
     getAssignment: (state) => (stationId: string, slotKey: SideKey) => {
-      return state?.assignments?.[stationId]?.[slotKey] || (state.enable_extra?"Extra":"");
+      return state?.assignments?.[stationId]?.[slotKey] || (state.enable_extra ? "Extra" : "");
     },
 
     getSnapshotMap: (state) => new Map(Object.entries(state.snapshot)),
@@ -34,6 +37,17 @@ export const useStationsStore = defineStore("stations", {
   },
 
   actions: {
+
+    choseSideById(checkStation: StationNumber, id: string) {
+      if (this.stations[checkStation] && this.stations[checkStation] === 2) {
+        return this.assignments[checkStation]?.left !== id ? "right" : "left";
+      }
+
+      return "right";
+    },
+    removeHistory(person: Operator) {
+      return person?.station_history?.pop();
+    },
     replaceAssignments(key: string) {
       if (!this.getSnapshotMap.get(key)?.snp_assignments) return;
       this.assignments = this.getSnapshotMap.get(key)!.snp_assignments;
@@ -75,12 +89,99 @@ export const useStationsStore = defineStore("stations", {
       this.removePerson(personId);
       this.assignments[stationId][slotKey] = personId;
       workersStore.setCurrentStation(personId, stationId);
+
     },
     outerAssignByTable(stationId: StationId, slotKey: SideKey, personId: string) {
       this.assignments[stationId] ??= this.getInitialState(slotKey);
 
-      this.removePerson(personId);
-      this.assignments[stationId][slotKey] = personId;
+       const workersStore = useWorkersStore();
+       const date = dayjs(workersStore.globalKey.split('_')[0]);
+       this.executeWorkerAssignment(stationId,slotKey,personId,date.toString());
+    },
+    updateStationHistory(date:string, personId:string, stationId:StationId) {
+      const cycleDate = dayjs(date).format("YYYY-MM-DD");
+      const sourceWorker = findWorkerById(useWorkersStore().workers, personId);
+      if (!sourceWorker) return;
+
+      const n = sourceWorker.station_history?.filter(
+        (e) => dayjs(e.date).format("YYYY-MM-DD") === cycleDate,
+      )?.length || 0;
+
+      if (n === 0) return;
+
+      for (const [key] of this.getSnapshotMap) {
+        const worker = this.snapshot[key].snp_workers.find((e) => e.id === personId);
+        if (!worker) continue;
+
+        const dayRecords = worker.station_history.filter(
+          (e) => dayjs(e.date).format("YYYY-MM-DD") === cycleDate,
+        );
+
+      if (dayRecords[n - 1]) {
+          dayRecords[n - 1].station = stationId;
+        }
+      }
+    },
+    performWorkerSwap(currentAssignedId: string, personId: string, stationId: StationId) {
+      const workersStore = useWorkersStore();
+      const worker = workersStore.workers.find((e) => e.id === currentAssignedId);
+      const desiredWorker = workersStore.workers.find((e) => e.id === personId);
+
+      const swapOrRemove = worker?.known_stations.includes(desiredWorker!.current_station)
+        ? desiredWorker!.current_station
+        : "unassigned";
+
+      const el = this.removeHistory(worker!);
+      const date = el?.date || dayjs(workersStore.globalKey.split('_')[0]).toDate();
+
+      if (swapOrRemove !== "unassigned") {
+        removePersonFromStation(worker!.id, swapOrRemove);
+        workersStore.setWorkerHistory(worker!.id, swapOrRemove, date);
+        this.assignPerson(
+          swapOrRemove as StationNumber,
+          this.choseSideById(swapOrRemove, desiredWorker!.id),
+          worker!.id,
+        );
+      }
+
+      if (swapOrRemove === "unassigned"){
+        workersStore.setCurrentStation(worker!.id, "unassigned" as StationNumber);
+        workersStore.setWorkerHistory(worker!.id, swapOrRemove as StationNumber, date);
+      }
+
+      this.updateStationHistory(date.toString(),worker!.id,swapOrRemove as StationId);
+
+      this.removeHistory(desiredWorker!);
+      removePersonFromStation(personId, stationId);
+      workersStore.setWorkerHistory(personId, stationId, date);
+      this.updateStationHistory(date.toString(),personId,stationId);
+    },
+
+    prepareDesiredWorker(personId: string, stationId: StationId, date: string) {
+      const workersStore = useWorkersStore();
+      const desiredWorker = workersStore.workers.find((e) => e.id === personId);
+      const dsWorkerCurrentSt = desiredWorker!.current_station as StationNumber | "unassigned";
+
+      if (desiredWorker?.station_history?.at(-1)?.station === dsWorkerCurrentSt) desiredWorker?.station_history?.pop();
+      removePersonFromStation(personId, stationId);
+      workersStore.setWorkerHistory(personId, stationId, new Date(date));
+      this.updateStationHistory(date,personId,stationId);
+    },
+
+  executeWorkerAssignment(
+      stationId: StationId,
+      slotKey: SideKey,
+      personId: string,
+      date: string,
+    ) {
+      const currentAssignedId = this.getAssignment(stationId, slotKey);
+      const shouldSwap = currentAssignedId && !isExtraAssignment(currentAssignedId);
+
+      if (shouldSwap) this.performWorkerSwap(currentAssignedId, personId, stationId);
+     
+     this.prepareDesiredWorker(personId, stationId, date);
+     this.assignPerson(stationId, slotKey, personId);
+
     },
   },
 });

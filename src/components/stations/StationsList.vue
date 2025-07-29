@@ -1,7 +1,7 @@
 <template>
   <el-card>
     <template #header>
-      <StationHeader />
+      <StationHeader v-model:now="now" />
     </template>
 
     <ul class="stationsList">
@@ -38,6 +38,7 @@
           :suffix-icon="Plus"
           class="stationButton --right"
           placeholder="Assign to station"
+          @change="console.log($event,'teee');"
           ><el-option
             v-for="person in availablePeople(key).value"
             :key="person.id"
@@ -47,34 +48,33 @@
       </li>
     </ul>
     <template #footer>
-      <ScheduleGeneration />
+      <ScheduleGeneration :hederDate="now" />
     </template>
   </el-card>
 </template>
 
 <script lang="ts" setup>
 import { Location, Plus } from "@element-plus/icons-vue";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref,} from "vue";
 import { StationId } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { SideKey } from "./types";
+import { dayjs } from "element-plus";
 
 const LEFT_SIDE_KEY = "left";
 const Right_SIDE_KEY = "right";
 
 const operatorStore = useWorkersStore();
 const store = useStationsStore();
-
-// const stationStore = useStationsStore();
-// const mapList = new Map(Object.entries(stationStore.snapshot));
+const now = ref(dayjs().format("YYYY-MM-DD"));
 
 const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({
     get: () => store.getAssignment(stationId, slotKey),
-    set: (value: string) => {
-      store.assignPerson(stationId, slotKey, value);
-    },
+    set: (personId: string) =>
+      store.executeWorkerAssignment(stationId, slotKey, personId, now.value)
+    ,
   });
 };
 
