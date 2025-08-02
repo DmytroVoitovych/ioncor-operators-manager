@@ -13,61 +13,55 @@
         <el-radio-group v-model="period">
           <el-radio
             :value="1"
-            @click="
-              () => {
-                if (date) date = [];
-              }
-            "
+            @click="() => { if (date) date = [];}"
             >Day</el-radio
           >
           <el-radio
             :value="9"
-            @click="
-              () => {
-                if (date) date = [];
-              }
-            "
+            @click="() => { if (date) date = [];}"
             >Week</el-radio
           >
         </el-radio-group>
         <div class="castomDateBlock">
           <span>Custom date period</span>
           <el-date-picker
-            v-model="date as []"
+            v-model="date"
             type="daterange"
             range-separator="To"
             start-placeholder="Start date"
             end-placeholder="End date"
             :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY"
             :editable="false"
-            @change="
-              (e: [Date, Date] | null) => {
-                if (!e) return;
-                const startDate = dayjs(e[0]);
-                const endDate = dayjs(e[1]);
-                console.log(endDate.diff(startDate, 'day'));
-                period = endDate.diff(startDate, 'day') + 1;
-              }
-            "
+            @change="handleDateRangeChange"
           />
         </div>
       </el-form-item>
     </el-form>
+    <div class="scheduleButtonBlock">
     <el-button
       ref="btn"
       size="large"
       class="scheduleButton"
       type="primary"
-      @click="
-        () => {
+      @click="() => {
           console.time();
-          test(date?.[0] || hederDate);
+          runScheduleGenerator(date?.[0] || headerDate);
           console.timeEnd();
-          // count = 0;
-        }
+         }
       "
       >Generate Schedule</el-button
     >
+    <el-button
+    v-if="!stationsStore.isApproved"
+    @click="()=>{
+      stationsStore.saveNewSnapshot();
+      stationsStore.switchApprovmentFlag(true);}"
+    size="large"
+    type="success"
+    >
+    Save data in DB
+  </el-button>
+    </div>
   </section>
 </template>
 
@@ -80,10 +74,11 @@ import { dayjs } from "element-plus";
 import { FIRST_LIST, ONE_DAY } from "./constants";
 import { Operator } from "~/maintypes/types";
 
+
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
 
-defineProps<{ hederDate: string }>();
+defineProps<{ headerDate: string }>();
 
 const availableWorkers = computed(() =>
   workersStore.workers
@@ -99,7 +94,7 @@ const absentAmount = computed(
 
 const timeRotation = ref(2);
 const period = ref(1);
-const date = ref<Date[]>([]);
+const date = ref([]);
 const snapshotMap = new Map();
 
 const disabledDate = (date: Date) => {
@@ -128,7 +123,16 @@ const rewriteSnapshot = (date: Date) => {
   }
 };
 
-const test = (start?: Date) => {
+const handleDateRangeChange = (e: [Date, Date] | null) => {
+                if (!e) return;
+                const startDate = dayjs(e[0]);
+                const endDate = dayjs(e[1]);
+
+                period.value = endDate.diff(startDate, 'day') + 1;
+              };
+
+
+const runScheduleGenerator = (start?: Date) => {
   snapshotMap.clear();
 
   let num = 0;
@@ -164,6 +168,7 @@ const test = (start?: Date) => {
   stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
   stationsStore.replaceAssignments(defaultKey);
   workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
+  stationsStore.switchApprovmentFlag(false);
 };
 
 watch(
@@ -205,10 +210,14 @@ watch(
   }
 }
 
+.scheduleButtonBlock{
+ display: flex;
+ justify-content: center;
+}
+
 .scheduleButton {
-  display: block;
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
+  flex-grow: 1;
+  align-self: center;
+
 }
 </style>

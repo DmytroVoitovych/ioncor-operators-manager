@@ -1,5 +1,5 @@
 <template>
-  <el-card>
+  <el-card shadow="never">
     <template #header>
       <StationHeader v-model:now="now" />
     </template>
@@ -38,7 +38,7 @@
           :suffix-icon="Plus"
           class="stationButton --right"
           placeholder="Assign to station"
-          @change="console.log($event,'teee');"
+          @change="console.log($event, 'teee')"
           ><el-option
             v-for="person in availablePeople(key).value"
             :key="person.id"
@@ -48,14 +48,14 @@
       </li>
     </ul>
     <template #footer>
-      <ScheduleGeneration :hederDate="now" />
+      <ScheduleGeneration :headerDate="now" />
     </template>
   </el-card>
 </template>
 
 <script lang="ts" setup>
 import { Location, Plus } from "@element-plus/icons-vue";
-import { computed, onMounted, ref,} from "vue";
+import { computed, onMounted, ref } from "vue";
 import { StationId } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
@@ -73,8 +73,7 @@ const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({
     get: () => store.getAssignment(stationId, slotKey),
     set: (personId: string) =>
-      store.executeWorkerAssignment(stationId, slotKey, personId, now.value)
-    ,
+      store.executeWorkerAssignment(stationId, slotKey, personId, now.value),
   });
 };
 
@@ -88,6 +87,16 @@ const availablePeople = (stationId: StationId) =>
 onMounted(() => store.initializeStateFromWorkersStore());
 </script>
 <style lang="scss" scoped>
+.el-card{
+--el-card-border-color:var(--blue-100);
+
+border-radius: 12px;
+border: 2px solid var(--blue-100);
+border-top-left-radius: 0;
+
+}
+
+
 .stationsList {
   display: flex;
   flex-direction: column;
@@ -106,7 +115,13 @@ onMounted(() => store.initializeStateFromWorkersStore());
   .stationInfo {
     grid-column: 2;
     text-align: center;
+
+    & > .stationName{
+    font-weight: 600;
+    color: var(--neutral-900);
+    }
   }
+
 
   .stationButton.--right {
     grid-column: 3;
@@ -132,4 +147,8 @@ onMounted(() => store.initializeStateFromWorkersStore());
     border: 2px dashed var(--el-border-color);
   }
 }
+
+/* .assigned{
+border-color: var(--el-color-success-light-5);
+} */
 </style>

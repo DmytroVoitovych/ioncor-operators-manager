@@ -1,5 +1,5 @@
 <template>
-  <div class="stationInfo__content">
+  <div :class="`stationInfo__content ${statusClass}`">
     <p class="stationInfo__content__item">
       <User color="var(--neutral-300)" width="16" height="16" />
       <span class="stationInfo__content__item__value text-preset-9"
@@ -25,6 +25,18 @@ const isOperatorAssigned = computed(() => {
 
   return 0;
 });
+
+const statusClass = computed(()=>
+{
+const oneSideSt = (isOperatorAssigned.value && props.station === 1);
+const oneMissing = props.station === 2 &&  isOperatorAssigned.value === 1;
+
+if(isOperatorAssigned.value === 2 || oneSideSt) return 'assigned';
+if(oneMissing) return 'partialy';
+return '';
+}
+);
+
 </script>
 
 <style lang="scss">

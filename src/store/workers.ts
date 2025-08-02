@@ -10,7 +10,7 @@ interface State {
   workers: Operator[];
   loading: boolean;
   error: string | null;
-  globalKey:string,
+  globalKey: string;
 }
 
 export const useWorkersStore = defineStore("workersStore", {
@@ -18,7 +18,7 @@ export const useWorkersStore = defineStore("workersStore", {
     workers: [],
     loading: false,
     error: null,
-    globalKey:'',
+    globalKey: "",
   }),
 
   getters: {
@@ -29,11 +29,11 @@ export const useWorkersStore = defineStore("workersStore", {
     // },
   },
   actions: {
-    setGlobalKey(key:string){
-     this.globalKey = key;
+    setGlobalKey(key: string) {
+      this.globalKey = key;
     },
     replaceWorkers(snapShot: Operator[]) {
-      if (!snapShot.length) return;
+      if (!snapShot?.length) return;
       this.workers = snapShot;
     },
     getWorkersById(id: string) {
@@ -42,6 +42,12 @@ export const useWorkersStore = defineStore("workersStore", {
     setCurrentStation(id: string, station: StationNumber) {
       const workerIndex = this.workers.findIndex((e) => e.id === id);
       this.workers[workerIndex].current_station = station;
+    },
+
+    clearCurrentOperatorsStation(){
+     this.workers?.forEach((worker)=>{
+        if(worker.current_station !== 'unassigned' as StationNumber) worker.current_station = 'unassigned' as StationNumber;
+     });
     },
 
     removeVisitedStation(personId: string, station: StationNumber) {
@@ -152,7 +158,8 @@ export const useWorkersStore = defineStore("workersStore", {
       const indexWorker = this.workers.findIndex((worker) => worker.id === id);
       const updatedWorkerFields = () =>
         (Object.keys(field) as (keyof Operator)[]).forEach((key) => {
-         if(key !== 'current_station') (this.workers[indexWorker][key] as Operator[typeof key]) = field[key];
+          if (key !== "current_station")
+            (this.workers[indexWorker][key] as Operator[typeof key]) = field[key];
         });
 
       const updateStationList = () => {
@@ -160,7 +167,7 @@ export const useWorkersStore = defineStore("workersStore", {
         const current = field?.current_station;
 
         if (current) {
-        const checkStation = store.assignments[current];
+          const checkStation = store.assignments[current];
           const choseSide =
             checkStation?.left && checkStation?.right
               ? "left"

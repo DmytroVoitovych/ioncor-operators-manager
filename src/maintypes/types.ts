@@ -84,4 +84,13 @@ type Operator = User & {
 
 type UserCreationData = Pick<Operator, "name" | "surname" | "known_stations" | "status">;
 
-export type { UserStatus, User, Manager, Operator, UserCreationData, StationNumber, StationId };
+export type {
+  UserStatus,
+  User,
+  Manager,
+  Operator,
+  UserCreationData,
+  StationNumber,
+  StationId,
+  StationMap,
+};

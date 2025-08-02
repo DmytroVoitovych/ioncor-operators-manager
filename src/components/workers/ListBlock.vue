@@ -10,11 +10,11 @@
     <el-table-column type="expand">
       <template #default="props">
         <ul>
-          <li>Full Name: {{ props.row.name }} {{ props.row.surname }}</li>
-          <li>Trained Stations: {{ props.row.known_stations.join(", ") }}</li>
+          <li>Full Name: <span class="text-preset-8-mono">{{ props.row.name }} {{ props.row.surname }}</span></li>
+          <li >Trained Stations: <span class="text-preset-8-mono">{{ props.row.known_stations.join(", ") }}</span></li>
           <li>
             Station History:
-            <el-table border :data="props.row.station_history" style="padding: 0px">
+            <el-table class="text-preset-8-mono" border :data="props.row.station_history?.slice(-30) || []" style="padding: 0px">
               <el-table-column
                 prop="date"
                 label="Date"
@@ -43,7 +43,7 @@
       filter-placement="bottom-end"
     />
     />
-    <el-table-column prop="current_station" label="Current Station" />
+    <el-table-column prop="current_station" label="Current Station" class-name="text-preset-8-mono" />
     <el-table-column fixed="right" label="Operations" min-width="120">
       <template #default="scope">
         <div class="operationBlock">

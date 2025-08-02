@@ -1,6 +1,7 @@
 import { createPinia, storeToRefs } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { nextTick } from "vue";
+import { useStationsStore } from "~/store/stations";
 import type { UserModule } from "~/types";
 
 export const install: UserModule = ({ app }) => {
@@ -12,7 +13,9 @@ export const install: UserModule = ({ app }) => {
     nextTick(() => {
       import("~/store/workers").then(({ useWorkersStore }) => {
         const workerStore = useWorkersStore();
+        const stationStore = useStationsStore();
         workerStore.getWorkers();
+        stationStore.getStationsFromDB();
       });
     });
   }

@@ -161,8 +161,12 @@ const generateSchedule = (
   }
 
   const workersStore = useWorkersStore();
-  availableWorkers.forEach((worker) =>
-    workersStore.setWorkerHistory(worker.id, worker.current_station, date),
+  availableWorkers.forEach((worker) =>{
+    const forMonth = -124;
+
+    workersStore.setWorkerHistory(worker.id, worker.current_station, date);
+    if(worker.station_history?.length >= 124) worker.station_history = worker.station_history.slice(forMonth);
+  }
   );
 
   if (stationsKeys.length) stationsStore.enable_extra = true;

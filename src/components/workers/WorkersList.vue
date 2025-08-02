@@ -8,5 +8,6 @@ div {
   border-radius: 12px;
   border: 2px solid var(--blue-100);
   overflow: hidden;
+  border-top-left-radius: 0;
 }
 </style>

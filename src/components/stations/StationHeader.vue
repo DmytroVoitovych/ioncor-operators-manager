@@ -1,27 +1,17 @@
 <template>
   <div class="card-header">
-    <h2 class="text-preset-6">Generated schedule for {{ now }}</h2>
-    <el-date-picker
-      v-model="now"
-      type="date"
-      placeholder="Pick a day"
-      value-format="YYYY-MM-DD"
-      :disabled-date="setDisabledDate"
-    />
+    <h2 class="text-preset-6">Generated schedule for <span class="text-preset-6-mono">{{ now }}</span></h2>
+    <el-date-picker v-model="now" type="date" placeholder="Pick a day" value-format="YYYY-MM-DD" :clearable="false"
+      :editable="false" :disabled-date="setDisabledDate" />
     <h2 v-show="options.length" class="text-preset-6">Shift time slot segments:</h2>
-    <el-segmented
-      aria-label="Shift segments"
-      v-model="timeSlot"
-      :options="options"
-      :props="props"
-    />
+    <el-segmented aria-label="Shift segments" v-model="timeSlot" :options="options" :props="props" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { dayjs } from "element-plus";
 import { storeToRefs } from "pinia";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { FIRST_LIST, ONE_DAY } from "./constants";
@@ -48,9 +38,12 @@ const options = computed(() => {
 });
 
 const setDisabledDate = (time: Date) => {
+  const formatedDate = dayjs(time).format("YYYY-MM-DD");
+  const isDateAllowed = time.getTime() < Date.now() - (ONE_DAY * 2);
+
   return (
-    time.getTime() < Date.now() - ONE_DAY ||
-    !getSnapshotMap.value.keys().find((key) => key.includes(dayjs(time).format("YYYY-MM-DD")))
+    (isDateAllowed ||
+      (!getSnapshotMap.value.keys()?.some((key) => key.includes(formatedDate))))
   );
 };
 
@@ -64,8 +57,27 @@ watch([timeSlot, now], () => {
   stationStore.replaceAssignments(key.value);
 });
 
-watch(key,(n)=>{
-workerStore.setGlobalKey(n);
-},{immediate:true});
+watch(
+  key,
+  (n) => {
+    workerStore.setGlobalKey(n);
+  },
+  { immediate: true },
+);
 
+onMounted(() => {
+  stationStore.getFreshSnapShots(key.value);
+});
 </script>
+
+<style scoped lang="scss">
+.card-header {
+  padding: 12px;
+  border: 1px solid var(--blue-100);
+  border-radius: 8px;
+  background-color: var(--el-color-primary-light-9);
+  display: grid;
+  gap: 4px;
+
+}
+</style>
