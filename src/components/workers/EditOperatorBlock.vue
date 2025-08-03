@@ -44,13 +44,15 @@
       <el-form-item prop="current_station" label="Current Station">
         <el-select
           v-model="formOperatorUpdate.current_station"
+          :disabled="formOperatorUpdate.status !== 'available'"
           placeholder="Select current station"
-        >
+          >
           <el-option
-            v-for="station of [...STATIONS_LIST, 'unassigned']"
+            v-for="station of [...formOperatorUpdate.known_stations, 'unassigned']"
             :key="station"
             :label="station"
             :value="station"
+            :disabled="formOperatorUpdate.status !== 'available'"
           />
         </el-select>
       </el-form-item>
@@ -117,17 +119,6 @@ const updateFormFromOperator = (operatorData: Operator) => {
   };
 };
 
-// watch(
-//   () => props.operatorId,
-//   (newId) => {
-//     if (newId) {
-//       operator.value = store.getWorkersById(newId) as Operator;
-//       updateFormFromOperator(operator.value);
-//     }
-//   },
-//   { immediate: true },
-// );
-// refactoring required!!!!
 watch(dialogTableVisible, (n) => {
   if (!n) return;
   operator.value = store.getWorkersById(props.operatorId) as Operator;
@@ -174,8 +165,7 @@ watch(
   () => formOperatorUpdate.value,
   (newValue) => {
     if (!operator.value || !operator.value.id) return;
-
-    const keys = Object.keys(newValue) as (keyof typeof newValue)[];
+ const keys = Object.keys(newValue) as (keyof typeof newValue)[];
     isChanged.value = keys.some((key) => {
       const formValue = newValue[key];
       const operatorValue = operator.value[key];

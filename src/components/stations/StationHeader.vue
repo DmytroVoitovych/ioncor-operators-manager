@@ -16,6 +16,7 @@ import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { FIRST_LIST, ONE_DAY } from "./constants";
 
+
 const stationStore = useStationsStore();
 const workerStore = useWorkersStore();
 const now = defineModel("now", { default: dayjs().format("YYYY-MM-DD") });
@@ -40,6 +41,8 @@ const options = computed(() => {
 const setDisabledDate = (time: Date) => {
   const formatedDate = dayjs(time).format("YYYY-MM-DD");
   const isDateAllowed = time.getTime() < Date.now() - (ONE_DAY * 2);
+  const today = formatedDate === dayjs().format("YYYY-MM-DD");
+  if(today) return;
 
   return (
     (isDateAllowed ||
@@ -51,7 +54,9 @@ const timeSlot = ref<string | undefined>(now.value + FIRST_LIST);
 const key = computed(() => now.value + (timeSlot.value?.slice(-2) || FIRST_LIST));
 
 watch([timeSlot, now], () => {
-  if (!getSnapshotMap.value.has(key.value)) return;
+  if (!getSnapshotMap.value.has(key.value)){
+    workerStore.getWorkers().finally(()=> stationStore.getFreshSnapShots(key.value)); return;
+  };
   timeSlot.value = key.value;
   workerStore.replaceWorkers(getSnapshotMap.value.get(key.value)!.snp_workers);
   stationStore.replaceAssignments(key.value);
@@ -66,7 +71,7 @@ watch(
 );
 
 onMounted(() => {
-  stationStore.getFreshSnapShots(key.value);
+stationStore.getFreshSnapShots(key.value);
 });
 </script>
 

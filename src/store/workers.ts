@@ -1,10 +1,8 @@
-import { fa, th } from "element-plus/es/locales.mjs";
 import { defineStore } from "pinia";
-import { Ref } from "vue";
 import { Operator, StationNumber, UserCreationData } from "~/maintypes/types";
 import { supabase } from "~/utils/supabase";
 import { useStationsStore } from "./stations";
-import { dayjs } from "element-plus";
+import { removePersonFromStation } from "~/components/stations/utils/stationAssignmentService";
 
 interface State {
   workers: Operator[];
@@ -44,10 +42,17 @@ export const useWorkersStore = defineStore("workersStore", {
       this.workers[workerIndex].current_station = station;
     },
 
-    clearCurrentOperatorsStation(){
-     this.workers?.forEach((worker)=>{
-        if(worker.current_station !== 'unassigned' as StationNumber) worker.current_station = 'unassigned' as StationNumber;
-     });
+    clearCurrentOperatorsStation() {
+      this.workers?.forEach((worker) => {
+        if (worker.current_station !== ("unassigned" as StationNumber))
+          worker.current_station = "unassigned" as StationNumber;
+      });
+    },
+
+    unassignOperator(worker: Operator) {
+      if (worker.current_station !== ("unassigned" as StationNumber))
+        worker.current_station = "unassigned" as StationNumber;
+      return;
     },
 
     removeVisitedStation(personId: string, station: StationNumber) {
@@ -83,7 +88,7 @@ export const useWorkersStore = defineStore("workersStore", {
       this.loading = true;
       this.error = null;
 
-      Promise.resolve(supabase.from("operatorslist").select("*"))
+      return Promise.resolve(supabase.from("operatorslist").select("*"))
         .then(({ data, error }) => {
           if (!error) this.workers = data;
           else this.error = error.message;
@@ -165,7 +170,15 @@ export const useWorkersStore = defineStore("workersStore", {
       const updateStationList = () => {
         const store = useStationsStore();
         const current = field?.current_station;
+        const status = field?.status;
+        const currentSt = this.workers[indexWorker].current_station;
+        const isAssigned = currentSt !== ("unassigned" as StationNumber);
+        const isStatusChanged = status && status !== "available";
 
+        if (isStatusChanged && isAssigned) {
+        this.unassignOperator(this.workers[indexWorker]);
+        removePersonFromStation(id, currentSt);
+        }
         if (current) {
           const checkStation = store.assignments[current];
           const choseSide =

@@ -102,6 +102,17 @@ export const useStationsStore = defineStore("stations", {
       // })
     },
 
+    unassignPerson(stationId: StationId, slotKey: SideKey, personId: string){
+    const workersStore = useWorkersStore();
+    const worker = workersStore.getWorkersById(personId);
+    if(!worker) return;
+
+      removePersonFromStation(personId,stationId);
+      this.removeHistory(worker);
+      this.assignments[stationId][slotKey] = '';
+      workersStore.unassignOperator(worker);
+    },
+
     assignPerson(stationId: StationId, slotKey: SideKey, personId: string) {
       this.assignments[stationId] ??= this.getInitialState(slotKey);
 
@@ -134,7 +145,7 @@ export const useStationsStore = defineStore("stations", {
         const worker = this.snapshot[key].snp_workers.find((e) => e.id === personId);
         if (!worker) continue;
 
-        const dayRecords = worker.station_history.filter(
+        const dayRecords = worker.station_history?.filter(
           (e) => dayjs(e.date).format("YYYY-MM-DD") === cycleDate,
         );
 
@@ -215,7 +226,7 @@ export const useStationsStore = defineStore("stations", {
           this.stations[worker.current_station] === 2 && checkStation?.left && checkStation?.right;
         const oneSide = this.stations[worker.current_station] === 1 && checkStation?.right;
 
-        if (twoSide || oneSide) worker.current_station = "unassigned" as StationNumber;
+        if (twoSide || oneSide || worker.status !== 'available') worker.current_station = "unassigned" as StationNumber;
         else this.outerAssignByTable(worker.current_station, side, worker.id);
       }
     },
@@ -229,16 +240,20 @@ export const useStationsStore = defineStore("stations", {
         .finally(() => console.log("fi", this.stations));
     },
     getFreshSnapShots(key: string) {
-      const nightShiftProtection = dayjs(key.split("_")[0]).subtract(1, "day") + FIRST_LIST;
+
+      const nightShiftProtection = dayjs(key.split("_")[0]).subtract(1, "day").format('YYYY-MM-DD') + FIRST_LIST;
       Promise.resolve(
         supabase.rpc("get_snapshot_keys_from_date", {
           from_key: nightShiftProtection,
           max_keys: 150,
         }),
       ).then((e) => {
+
         if (!e.data[key]) {
           const workerStore = useWorkersStore();
+          this.assignments = {};
           workerStore.workers?.forEach(this.cleanupDuplicateAssignments);
+          if(e.data[nightShiftProtection]) this.snapshot = e.data;
           return;
         }
 
