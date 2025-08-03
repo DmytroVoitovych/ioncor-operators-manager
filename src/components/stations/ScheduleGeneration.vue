@@ -1,66 +1,41 @@
 <template>
   <section class="scheduleGeneration">
-    <h3>Schedule Generation</h3>
+    <div class="scheduleHeadlineBlock">
+      <h3>Schedule Generation</h3>
+      </div>
     <el-form label-position="top">
       <el-form-item label="Rotation settings">
         <el-radio-group v-model="timeRotation">
           <el-radio :value="4">Every two hours</el-radio>
           <el-radio :value="2">Every four hours</el-radio>
           <el-radio :value="1">full day</el-radio>
-        </el-radio-group></el-form-item
-      >
+        </el-radio-group></el-form-item>
       <el-form-item label="Period Selection">
         <el-radio-group v-model="period">
-          <el-radio
-            :value="1"
-            @click="() => { if (date) date = [];}"
-            >Day</el-radio
-          >
-          <el-radio
-            :value="9"
-            @click="() => { if (date) date = [];}"
-            >Week</el-radio
-          >
+          <el-radio :value="1" @click="() => { if (date) date = []; }">Day</el-radio>
+          <el-radio :value="9" @click="() => { if (date) date = []; }">Week</el-radio>
         </el-radio-group>
         <div class="castomDateBlock">
           <span>Custom date period</span>
-          <el-date-picker
-            v-model="date"
-            type="daterange"
-            range-separator="To"
-            start-placeholder="Start date"
-            end-placeholder="End date"
-            :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY"
-            :editable="false"
-            @change="handleDateRangeChange"
-          />
+          <el-date-picker v-model="date" type="daterange" range-separator="To" start-placeholder="Start date"
+            end-placeholder="End date" :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY"
+            :editable="false" @change="handleDateRangeChange" />
         </div>
       </el-form-item>
     </el-form>
     <div class="scheduleButtonBlock">
-    <el-button
-      ref="btn"
-      size="large"
-      class="scheduleButton"
-      type="primary"
-      @click="() => {
-          console.time();
-          runScheduleGenerator(date?.[0] || headerDate);
-          console.timeEnd();
-         }
-      "
-      >Generate Schedule</el-button
-    >
-    <el-button
-    v-if="!stationsStore.isApproved"
-    @click="()=>{
-      stationsStore.saveNewSnapshot();
-      stationsStore.switchApprovmentFlag(true);}"
-    size="large"
-    type="success"
-    >
-    Save data in DB
-  </el-button>
+      <el-button ref="btn" size="large" class="scheduleButton" type="primary" @click="() => {
+        console.time();
+        runScheduleGenerator(date?.[0] || headerDate,interationsAmount);
+        console.timeEnd();
+      }
+      ">Generate Schedule</el-button>
+      <el-button v-if="!stationsStore.isApproved" @click="() => {
+        stationsStore.saveNewSnapshot();
+        stationsStore.switchApprovmentFlag(true);
+      }" size="large" type="success">
+        Save data in DB
+      </el-button>
     </div>
   </section>
 </template>
@@ -123,26 +98,31 @@ const rewriteSnapshot = (date: Date) => {
   }
 };
 
+
+
 const handleDateRangeChange = (e: [Date, Date] | null) => {
-                if (!e) return;
-                const startDate = dayjs(e[0]);
-                const endDate = dayjs(e[1]);
+  if (!e) return;
+  const startDate = dayjs(e[0]);
+  const endDate = dayjs(e[1]);
 
-                period.value = endDate.diff(startDate, 'day') + 1;
-              };
+  period.value = endDate.diff(startDate, 'day') + 1;
+};
 
 
-const runScheduleGenerator = (start?: Date) => {
+
+const runScheduleGenerator = (start?: Date,amount:number=1) => {
   snapshotMap.clear();
 
   let num = 0;
   let date = start || new Date();
 
-  for (let index = 0; index < interationsAmount.value; index++) {
+
+  for (let index = 0; index < amount; index++) {
     if (!num) {
       rewriteHistory(toRaw(workersStore.workers), date);
       rewriteSnapshot(date);
     }
+
     const copy = generateSchedule(
       stationsStore,
       availableWorkers.value,
@@ -163,8 +143,8 @@ const runScheduleGenerator = (start?: Date) => {
   console.log(snapshotMap);
   const defaultDate = start || new Date();
   const defaultRotation = +FIRST_LIST.slice(-1);
-  const defaultKey = makeKey(defaultDate, defaultRotation);
-
+  const defaultKey = makeKey(defaultDate, +workersStore.globalKey?.split('_')[1] || defaultRotation);
+  console.log(defaultKey);
   stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
   stationsStore.replaceAssignments(defaultKey);
   workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
@@ -184,6 +164,13 @@ watch(
 </script>
 
 <style scoped lang="scss">
+.scheduleHeadlineBlock {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
 .el-form {
   display: flex;
   justify-content: space-evenly;
@@ -210,9 +197,9 @@ watch(
   }
 }
 
-.scheduleButtonBlock{
- display: flex;
- justify-content: center;
+.scheduleButtonBlock {
+  display: flex;
+  justify-content: center;
 }
 
 .scheduleButton {

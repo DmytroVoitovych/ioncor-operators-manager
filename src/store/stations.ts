@@ -129,6 +129,27 @@ export const useStationsStore = defineStore("stations", {
       const date = dayjs(workersStore.globalKey.split("_")[0]);
       this.executeWorkerAssignment(stationId, slotKey, personId, date.toString());
     },
+    deleteWorkerFromSnapshot(keyGlobal:string,personId: string,){
+    const currentDate = keyGlobal.split('_')[0];
+
+     for (const [key] of this.getSnapshotMap) {
+        if(!key) break;
+
+        const snapData = this.snapshot[key];
+        const worker = snapData.snp_workers?.find((e) => e.id === personId);
+        const workerId = snapData.snp_workers?.findIndex((e) => e.id === personId);
+        const keyDate = dayjs(key.split('_')[0]);
+
+        if (workerId === -1 &&  (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate))) continue;
+        if(worker?.current_station !== 'unassigned' as StationNumber){
+
+        const snapAssignment = snapData.snp_assignments[worker!.current_station];
+        const side = snapAssignment?.left === personId?'left':'right';
+        this.snapshot[key].snp_assignments[worker!.current_station][side] = 'Extra';
+        this.snapshot[key].snp_workers.splice(workerId,1);
+        }
+     }
+    },
     updateStationHistory(date: string, personId: string, stationId: StationId) {
       const cycleDate = dayjs(date).format("YYYY-MM-DD");
       const sourceWorker = findWorkerById(useWorkersStore().workers, personId);
@@ -253,7 +274,8 @@ export const useStationsStore = defineStore("stations", {
           const workerStore = useWorkersStore();
           this.assignments = {};
           workerStore.workers?.forEach(this.cleanupDuplicateAssignments);
-          if(e.data[nightShiftProtection]) this.snapshot = e.data;
+          this.snapshot = e.data;
+          console.log(this.snapshot);
           return;
         }
 
@@ -270,4 +292,7 @@ export const useStationsStore = defineStore("stations", {
       ).finally(() => console.log("ssss"));
     },
   },
-});
+// persist:true
+},
+
+);

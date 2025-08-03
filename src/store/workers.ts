@@ -99,12 +99,14 @@ export const useWorkersStore = defineStore("workersStore", {
     deleteWorker(id: string, loadingHandler: (loadingState: boolean) => void) {
       loadingHandler(true);
       this.error = null;
-      const index = this.workers.findIndex((worker) => worker.id === id);
+
+      const stStore = useStationsStore();
 
       Promise.resolve(supabase.from("operatorslist").delete().eq("id", id))
         .then(({ error }) => {
           if (!error) {
-            this.workers.splice(index, 1);
+          stStore.deleteWorkerFromSnapshot(this.globalKey.split('_')[0],id);
+          stStore.saveNewSnapshot();
           } else {
             this.error = error.message;
           }

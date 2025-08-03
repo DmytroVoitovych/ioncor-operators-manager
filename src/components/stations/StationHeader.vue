@@ -11,7 +11,7 @@
 <script lang="ts" setup>
 import { dayjs } from "element-plus";
 import { storeToRefs } from "pinia";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed,onMounted,  ref, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { FIRST_LIST, ONE_DAY } from "./constants";
@@ -62,6 +62,11 @@ watch([timeSlot, now], () => {
   stationStore.replaceAssignments(key.value);
 });
 
+watch(now,(n,o)=>{
+ if(n === o) return;
+ timeSlot.value = now.value + FIRST_LIST;
+});
+
 watch(
   key,
   (n) => {
@@ -69,6 +74,7 @@ watch(
   },
   { immediate: true },
 );
+
 
 onMounted(() => {
 stationStore.getFreshSnapShots(key.value);
