@@ -129,8 +129,24 @@ export const useStationsStore = defineStore("stations", {
       const date = dayjs(workersStore.globalKey.split("_")[0]);
       this.executeWorkerAssignment(stationId, slotKey, personId, date.toString());
     },
+    addWorkerInSnapshot(keyGlobal:string,newWorker:Operator,){
+    const currentDate = keyGlobal;
+
+     for (const [key] of this.getSnapshotMap) {
+        if(!key) break;
+
+        const snapData = this.snapshot[key];
+        const worker = snapData.snp_workers?.find((e) => e.id === newWorker?.id);
+       const keyDate = dayjs(key.split('_')[0]);
+
+        if (worker &&  (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate))) continue;
+
+        this.snapshot[key].snp_workers = [...this.snapshot[key].snp_workers,newWorker];
+
+     }
+    },
     deleteWorkerFromSnapshot(keyGlobal:string,personId: string,){
-    const currentDate = keyGlobal.split('_')[0];
+    const currentDate = keyGlobal;
 
      for (const [key] of this.getSnapshotMap) {
         if(!key) break;

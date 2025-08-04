@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { Operator, StationNumber, UserCreationData } from "~/maintypes/types";
+import { Operator, StationNumber, User, UserCreationData } from "~/maintypes/types";
 import { supabase } from "~/utils/supabase";
 import { useStationsStore } from "./stations";
 import { removePersonFromStation } from "~/components/stations/utils/stationAssignmentService";
@@ -100,13 +100,28 @@ export const useWorkersStore = defineStore("workersStore", {
       loadingHandler(true);
       this.error = null;
 
+      const worker = this.workers?.find((e) => e.id === id);
+      const workerIndex = this.workers?.findIndex((e) => e.id === id);
       const stStore = useStationsStore();
+      const glKey = this.globalKey.split("_")[0];
 
       Promise.resolve(supabase.from("operatorslist").delete().eq("id", id))
         .then(({ error }) => {
           if (!error) {
-          stStore.deleteWorkerFromSnapshot(this.globalKey.split('_')[0],id);
-          stStore.saveNewSnapshot();
+            if (stStore.getSnapshotMap.has(this.globalKey)) {
+              stStore.deleteWorkerFromSnapshot(glKey, id);
+              stStore.saveNewSnapshot();
+              return;
+            }
+            if (worker && worker.current_station !== ("unassigned" as StationNumber)) {
+              stStore.unassignPerson(
+                worker.current_station,
+                stStore.choseSideById(worker.current_station, id),
+                id,
+              );
+            }
+            this.workers.splice(workerIndex, 1);
+
           } else {
             this.error = error.message;
           }
@@ -117,12 +132,34 @@ export const useWorkersStore = defineStore("workersStore", {
     deleteSelectedWorkers(selectedIds: string[], loadingHandler: (loadingState: boolean) => void) {
       loadingHandler(true);
       this.error = null;
-      const filteredArr = this.workers.filter((worker) => !selectedIds.includes(worker.id));
+      const filteredArrForDelete = this.workers.filter((worker) => selectedIds.includes(worker.id));
+      const filteredArrForReplace = this.workers.filter(
+        (worker) => !selectedIds.includes(worker.id),
+      );
+
+      const stStore = useStationsStore();
+      const glKey = this.globalKey.split("_")[0];
 
       Promise.resolve(supabase.from("operatorslist").delete().in("id", selectedIds))
         .then(({ error }) => {
           if (!error) {
-            this.workers = filteredArr;
+            if (stStore.getSnapshotMap.has(this.globalKey)) {
+              filteredArrForDelete.forEach(({ id }) =>
+                stStore.deleteWorkerFromSnapshot(glKey, id),
+              );
+              stStore.saveNewSnapshot();
+              return;
+            }
+
+            filteredArrForDelete.forEach(({ current_station, id }) => {
+              if (current_station !== ("unassigned" as StationNumber))
+                stStore.unassignPerson(
+                  current_station,
+                  stStore.choseSideById(current_station, id),
+                  id,
+                );
+            });
+            this.workers = filteredArrForReplace;
           } else {
             this.error = error.message;
           }
@@ -138,11 +175,19 @@ export const useWorkersStore = defineStore("workersStore", {
       loadingHandler(true);
       this.error = null;
 
+      const stStore = useStationsStore();
+      const glKey = this.globalKey.split("_")[0];
+
       Promise.resolve(supabase.from("operatorslist").insert(worker).select())
         .then(({ data, error }) => {
           if (!error) {
             console.log("Worker added:", data);
+
             this.workers = [...this.workers, ...data];
+
+            const operator:Operator = data[0];
+            stStore.addWorkerInSnapshot(glKey,operator);
+            stStore.saveNewSnapshot();
           } else {
             this.error = error.message;
           }
@@ -178,8 +223,8 @@ export const useWorkersStore = defineStore("workersStore", {
         const isStatusChanged = status && status !== "available";
 
         if (isStatusChanged && isAssigned) {
-        this.unassignOperator(this.workers[indexWorker]);
-        removePersonFromStation(id, currentSt);
+          this.unassignOperator(this.workers[indexWorker]);
+          removePersonFromStation(id, currentSt);
         }
         if (current) {
           const checkStation = store.assignments[current];
