@@ -6,13 +6,18 @@
 
     <ul class="stationsList">
       <li class="stationItem" v-for="(station, key) in store.getStations" :key="key">
-        <el-select clearable @clear="clearSelectValue(key,LEFT_SIDE_KEY,getStationSelect(key,LEFT_SIDE_KEY).value)" v-model="getStationSelect(key, LEFT_SIDE_KEY).value" :suffix-icon="Plus"
-          class="stationButton --left dashed" v-if="+station === 2" placeholder="Assign to station">
-          <el-option v-for="person in availablePeople(key).value" :key="person.id"
-            :label="`${person.name} ${person.surname}`" :value="person.id">
-            {{ recentlyVisitedMark(person, `${person.name} ${person.surname}`, key) }}
-          </el-option>
-        </el-select>
+        <div class="selectBlock">
+          <el-select clearable @clear="clearSelectValue(key, LEFT_SIDE_KEY, getStationSelect(key, LEFT_SIDE_KEY).value)"
+            v-model="getStationSelect(key, LEFT_SIDE_KEY).value" :suffix-icon="Plus" class="stationButton --left dashed"
+            v-if="+station === 2" placeholder="Assign to station">
+            <el-option v-for="person in availablePeople(key).value" :key="person.id"
+              :label="`${person.name} ${person.surname}`" :value="person.id">
+              {{ recentlyVisitedMark(person, `${person.name} ${person.surname}`, key) }}
+            </el-option>
+          </el-select>
+          <ButtonClear v-if="getStationSelect(key, LEFT_SIDE_KEY).value"
+            @click="clearSelectValue(key, LEFT_SIDE_KEY, getStationSelect(key, LEFT_SIDE_KEY).value)" />
+        </div>
         <div class="stationInfo">
           <p class="stationName">
             <Location color="var(--neutral-300)" width="20" height="20" /> Station
@@ -23,12 +28,18 @@
             {{ +station === 2 ? "operators" : "operator" }}
           </StationInfoContent>
         </div>
-        <el-select clearable @clear="clearSelectValue(key,Right_SIDE_KEY,getStationSelect(key, Right_SIDE_KEY).value)" v-model="getStationSelect(key, Right_SIDE_KEY).value" :suffix-icon="Plus"
-          class="stationButton --right" placeholder="Assign to station" @change="console.log($event, 'teee')"><el-option
+        <div class="selectBlock">
+        <el-select clearable @clear="clearSelectValue(key, Right_SIDE_KEY, getStationSelect(key, Right_SIDE_KEY).value)"
+          v-model="getStationSelect(key, Right_SIDE_KEY).value" :suffix-icon="Plus" class="stationButton --right"
+          placeholder="Assign to station" @change="console.log($event, 'teee')"><el-option
             v-for="person in availablePeople(key).value" :key="person.id" :label="`${person.name} ${person.surname}`"
             :value="person.id">
-            {{ recentlyVisitedMark(person, `${person.name} ${person.surname}`, key) }}
+            {{ getSpecialMark(person, getStationSelect(key, Right_SIDE_KEY).value, key, `${person.name}
+            ${person.surname}`)}}
           </el-option></el-select>
+           <ButtonClear v-if="getStationSelect(key, Right_SIDE_KEY).value"
+            @click="clearSelectValue(key, Right_SIDE_KEY, getStationSelect(key, Right_SIDE_KEY).value)" />
+          </div>
       </li>
     </ul>
     <template #footer>
@@ -45,6 +56,7 @@ import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { SideKey } from "./types";
 import { dayjs } from "element-plus";
+import { findWorkerById } from "./utils/workerUtils";
 
 const LEFT_SIDE_KEY = "left";
 const Right_SIDE_KEY = "right";
@@ -56,9 +68,10 @@ const now = ref(dayjs().format("YYYY-MM-DD"));
 const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({
     get: () => store.getAssignment(stationId, slotKey),
-    set: (personId: string) =>{
-      console.log(personId,'test');
-     if(personId)store.executeWorkerAssignment(stationId, slotKey, personId, now.value)},
+    set: (personId: string) => {
+      console.log(personId, 'test');
+      if (personId) store.executeWorkerAssignment(stationId, slotKey, personId, now.value)
+    },
   });
 };
 
@@ -80,9 +93,27 @@ const recentlyVisitedMark = (person: Operator, label: string, station: StationId
 
   });
 
-  const clearSelectValue = (stationId:StationId,slotKey:SideKey,personId:string)=>{
-  store.unassignPerson(stationId,slotKey,personId);
-  };
+const reverseSwapMark = (person: Operator, currentPerson: Operator | 'Extra' | '', station: StationId) =>
+  computed(() => {
+
+    const isAnotherPerson = person.current_station !== station;
+    const isSuitablePerson = !!currentPerson && currentPerson !== 'Extra' && person.current_station !== 'unassigned' as StationId;
+    const isMarkMandatory = isAnotherPerson && isSuitablePerson && currentPerson?.known_stations.includes(person.current_station);
+
+    return isMarkMandatory ? ' 👥🔄 ' : '';
+
+  });
+
+const getSpecialMark = (person: Operator, currentPersonId: string | 'Extra' | '', station: StationId, label: string) =>
+  computed(() =>
+    recentlyVisitedMark(person, label, station).value
+    +
+    reverseSwapMark(person, findWorkerById(operatorStore.workers, currentPersonId) || '', station).value)
+  ;
+
+const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: string) => {
+  store.unassignPerson(stationId, slotKey, personId);
+};
 
 onMounted(() => store.initializeStateFromWorkersStore());
 </script>
@@ -94,6 +125,11 @@ onMounted(() => store.initializeStateFromWorkersStore());
   border: 2px solid var(--blue-100);
   border-top-left-radius: 0;
 
+}
+
+.selectBlock{
+width: 100%;
+position: relative;
 }
 
 

@@ -9,6 +9,7 @@ import { assignWorkerToStation, removePersonFromStation } from "./stationAssignm
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { toRaw } from "vue";
+import cloneDeep from "lodash.clonedeep";
 //  const firstW =   availableWorkers.filter(e=>e.known_stations.includes('130')).toSorted(
 //       (a, b) =>
 //         a.station_history?.filter((st) => st.station === "130").length -
@@ -173,8 +174,8 @@ const generateSchedule = (
   if (!stationsKeys.length && stationsStore.enable_extra) stationsStore.enable_extra = false;
 
   return {
-    snp_workers: structuredClone(toRaw(workersStore.workers)),
-    snp_assignments: structuredClone(toRaw(stationsStore.assignments)),
+    snp_workers:cloneDeep(toRaw(workersStore.workers)),
+    snp_assignments: cloneDeep(toRaw(stationsStore.assignments)),
   };
 };
 

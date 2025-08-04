@@ -4,7 +4,7 @@
     <el-date-picker v-model="now" type="date" placeholder="Pick a day" value-format="YYYY-MM-DD" :clearable="false"
       :editable="false" :disabled-date="setDisabledDate" />
     <h2 v-show="options.length" class="text-preset-6">Shift time slot segments:</h2>
-    <el-segmented aria-label="Shift segments" v-model="timeSlot" :options="options" :props="props" />
+    <el-segmented :key="segmentedKey" aria-label="Shift segments" v-model="timeSlot" :options="options" :props="props" />
   </div>
 </template>
 
@@ -27,6 +27,8 @@ const props = {
   label: "period",
   value: "map_key",
 };
+
+const segmentedKey = ref(0);
 
 const options = computed(() => {
   if (!getSnapshotMap.value.size || getSnapshotMap.value.size === 1) return [];
@@ -54,10 +56,12 @@ const timeSlot = ref<string | undefined>(now.value + FIRST_LIST);
 const key = computed(() => now.value + (timeSlot.value?.slice(-2) || FIRST_LIST));
 
 watch([timeSlot, now], () => {
+
   if (!getSnapshotMap.value.has(key.value)){
     workerStore.getWorkers().finally(()=> stationStore.getFreshSnapShots(key.value)); return;
   };
   timeSlot.value = key.value;
+
   workerStore.replaceWorkers(getSnapshotMap.value.get(key.value)!.snp_workers);
   stationStore.replaceAssignments(key.value);
 });
@@ -79,6 +83,15 @@ watch(
 onMounted(() => {
 stationStore.getFreshSnapShots(key.value);
 });
+
+watch(options, (newOptions) => {
+  if (newOptions.length === 0) return;
+
+  const currentExists = newOptions.some(option => option.map_key === timeSlot.value);
+
+  if (!currentExists) timeSlot.value = newOptions[0]?.map_key;
+  segmentedKey.value++;
+}, { flush: 'post' });
 </script>
 
 <style scoped lang="scss">

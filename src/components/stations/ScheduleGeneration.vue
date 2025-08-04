@@ -140,11 +140,10 @@ const runScheduleGenerator = (start?: Date,amount:number=1) => {
     }
   }
 
-  console.log(snapshotMap);
   const defaultDate = start || new Date();
   const defaultRotation = +FIRST_LIST.slice(-1);
-  const defaultKey = makeKey(defaultDate, +workersStore.globalKey?.split('_')[1] || defaultRotation);
-  console.log(defaultKey);
+  const defaultKey = makeKey(defaultDate, defaultRotation);
+
   stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
   stationsStore.replaceAssignments(defaultKey);
   workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);

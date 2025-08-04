@@ -12,6 +12,7 @@ declare module 'vue' {
     AuthForm: typeof import('./components/shared/AuthForm.vue')['default']
     BarPopover: typeof import('./components/common/BarPopover.vue')['default']
     BaseHeader: typeof import('./components/layout/BaseHeader.vue')['default']
+    ButtonClear: typeof import('./components/stations/ButtonClear.vue')['default']
     ContainerBase: typeof import('./components/shared/ContainerBase.vue')['default']
     DiagramBlock: typeof import('./components/statistics/DiagramBlock.vue')['default']
     EditOperatorBlock: typeof import('./components/workers/EditOperatorBlock.vue')['default']

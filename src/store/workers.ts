@@ -108,7 +108,7 @@ export const useWorkersStore = defineStore("workersStore", {
       Promise.resolve(supabase.from("operatorslist").delete().eq("id", id))
         .then(({ error }) => {
           if (!error) {
-            if (stStore.getSnapshotMap.has(this.globalKey)) {
+          if (stStore.getSnapshotMap.has(this.globalKey)) {
               stStore.deleteWorkerFromSnapshot(glKey, id);
               stStore.saveNewSnapshot();
               return;

@@ -157,13 +157,13 @@ export const useStationsStore = defineStore("stations", {
         const keyDate = dayjs(key.split('_')[0]);
 
         if (workerId === -1 &&  (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate))) continue;
-        if(worker?.current_station !== 'unassigned' as StationNumber){
+        if(worker?.current_station !== 'unassigned' as StationNumber ){
 
         const snapAssignment = snapData.snp_assignments[worker!.current_station];
         const side = snapAssignment?.left === personId?'left':'right';
         this.snapshot[key].snp_assignments[worker!.current_station][side] = 'Extra';
-        this.snapshot[key].snp_workers.splice(workerId,1);
         }
+        this.snapshot[key].snp_workers.splice(workerId,1);
      }
     },
     updateStationHistory(date: string, personId: string, stationId: StationId) {
@@ -308,7 +308,7 @@ export const useStationsStore = defineStore("stations", {
       ).finally(() => console.log("ssss"));
     },
   },
-// persist:true
+
 },
 
 );
