@@ -4,7 +4,7 @@
       <StationHeader v-model:now="now" />
     </template>
 
-    <ul class="stationsList">
+    <ul class="stationsList" ref="screenshotArea">
       <li class="stationItem" v-for="(station, key) in store.getStations" :key="key">
         <div class="selectBlock">
           <el-select clearable @clear="clearSelectValue(key, LEFT_SIDE_KEY, getStationSelect(key, LEFT_SIDE_KEY).value)"
@@ -29,34 +29,40 @@
           </StationInfoContent>
         </div>
         <div class="selectBlock">
-        <el-select clearable @clear="clearSelectValue(key, Right_SIDE_KEY, getStationSelect(key, Right_SIDE_KEY).value)"
-          v-model="getStationSelect(key, Right_SIDE_KEY).value" :suffix-icon="Plus" class="stationButton --right"
-          placeholder="Assign to station" @change="console.log($event, 'teee')"><el-option
-            v-for="person in availablePeople(key).value" :key="person.id" :label="`${person.name} ${person.surname}`"
-            :value="person.id">
-            {{ getSpecialMark(person, getStationSelect(key, Right_SIDE_KEY).value, key, `${person.name}
-            ${person.surname}`)}}
-          </el-option></el-select>
-           <ButtonClear v-if="getStationSelect(key, Right_SIDE_KEY).value"
+          <el-select clearable
+            @clear="clearSelectValue(key, Right_SIDE_KEY, getStationSelect(key, Right_SIDE_KEY).value)"
+            v-model="getStationSelect(key, Right_SIDE_KEY).value" :suffix-icon="Plus" class="stationButton --right"
+            placeholder="Assign to station" @change="console.log($event, 'teee')"><el-option
+              v-for="person in availablePeople(key).value" :key="person.id" :label="`${person.name} ${person.surname}`"
+              :value="person.id">
+              {{ getSpecialMark(person, getStationSelect(key, Right_SIDE_KEY).value, key, `${person.name}
+              ${person.surname}`) }}
+            </el-option></el-select>
+          <ButtonClear v-if="getStationSelect(key, Right_SIDE_KEY).value"
             @click="clearSelectValue(key, Right_SIDE_KEY, getStationSelect(key, Right_SIDE_KEY).value)" />
-          </div>
+        </div>
       </li>
     </ul>
     <template #footer>
-      <ScheduleGeneration :headerDate="now" />
+      <ScheduleGeneration :headerDate="now">
+        <ButtonMakeScreen v-if="availablePeople?.length > (availablePeople?.length / 2)"
+          @click="screenRef?.captureAndDownload(screenshotArea, operatorStore.globalKey)" ref="screenRef" />
+      </ScheduleGeneration>
     </template>
   </el-card>
 </template>
 
 <script lang="ts" setup>
 import { Location, Plus } from "@element-plus/icons-vue";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 import { Operator, StationId } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { SideKey } from "./types";
 import { dayjs } from "element-plus";
 import { findWorkerById } from "./utils/workerUtils";
+import { templateRef } from "@vueuse/core";
+import ButtonMakeScreen from "./ButtonMakeScreen.vue";
 
 const LEFT_SIDE_KEY = "left";
 const Right_SIDE_KEY = "right";
@@ -64,6 +70,9 @@ const Right_SIDE_KEY = "right";
 const operatorStore = useWorkersStore();
 const store = useStationsStore();
 const now = ref(dayjs().format("YYYY-MM-DD"));
+const screenshotArea = templateRef('screenshotArea');
+const screenRef = useTemplateRef<InstanceType<typeof ButtonMakeScreen>>('screenRef');
+
 
 const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({
@@ -127,9 +136,9 @@ onMounted(() => store.initializeStateFromWorkersStore());
 
 }
 
-.selectBlock{
-width: 100%;
-position: relative;
+.selectBlock {
+  width: 100%;
+  position: relative;
 }
 
 

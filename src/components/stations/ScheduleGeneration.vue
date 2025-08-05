@@ -2,6 +2,7 @@
   <section class="scheduleGeneration">
     <div class="scheduleHeadlineBlock">
       <h3>Schedule Generation</h3>
+      <slot></slot>
       </div>
     <el-form label-position="top">
       <el-form-item label="Rotation settings">

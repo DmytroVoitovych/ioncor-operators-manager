@@ -75,7 +75,7 @@ watch(
   key,
   (n) => {
     workerStore.setGlobalKey(n);
-  },
+    },
   { immediate: true },
 );
 
