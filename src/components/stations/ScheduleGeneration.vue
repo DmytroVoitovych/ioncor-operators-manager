@@ -3,7 +3,7 @@
     <div class="scheduleHeadlineBlock">
       <h3>Schedule Generation</h3>
       <slot></slot>
-      </div>
+    </div>
     <el-form label-position="top">
       <el-form-item label="Rotation settings">
         <el-radio-group v-model="timeRotation">
@@ -25,12 +25,10 @@
       </el-form-item>
     </el-form>
     <div class="scheduleButtonBlock">
-      <el-button ref="btn" size="large" class="scheduleButton" type="primary" @click="() => {
-        console.time();
-        runScheduleGenerator(date?.[0] || headerDate,interationsAmount);
-        console.timeEnd();
-      }
-      ">Generate Schedule</el-button>
+      <el-button v-loading="perfomanceLoader" :disabled="perfomanceLoader" ref="btn" size="large" class="scheduleButton"
+        type="primary" @click="
+          runScheduleGenerator(date?.[0] || headerDate, interationsAmount);
+        ">{{ perfomanceLoader ? 'Generating is going...' : 'Generate Schedule' }}</el-button>
       <el-button v-if="!stationsStore.isApproved" @click="() => {
         stationsStore.saveNewSnapshot();
         stationsStore.switchApprovmentFlag(true);
@@ -49,10 +47,13 @@ import { generateSchedule } from "./utils/scheduleGenerator";
 import { dayjs } from "element-plus";
 import { FIRST_LIST, ONE_DAY } from "./constants";
 import { Operator } from "~/maintypes/types";
+import { useTimeoutFn } from "@vueuse/core";
 
 
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
+
+const perfomanceLoader = ref(false);
 
 defineProps<{ headerDate: string }>();
 
@@ -111,44 +112,53 @@ const handleDateRangeChange = (e: [Date, Date] | null) => {
 
 
 
-const runScheduleGenerator = (start?: Date,amount:number=1) => {
-  snapshotMap.clear();
+const runScheduleGenerator = (start?: Date, amount: number = 1) => {
+  perfomanceLoader.value = true;
 
-  let num = 0;
-  let date = start || new Date();
+  useTimeoutFn(() => {
+    snapshotMap.clear();
+
+    let num = 0;
+    let date = start || new Date();
 
 
-  for (let index = 0; index < amount; index++) {
-    if (!num) {
-      rewriteHistory(toRaw(workersStore.workers), date);
-      rewriteSnapshot(date);
+    for (let index = 0; index < amount; index++) {
+      if (!num) {
+        rewriteHistory(toRaw(workersStore.workers), date);
+        rewriteSnapshot(date);
+      }
+
+      const copy = generateSchedule(
+        stationsStore,
+        availableWorkers.value,
+        stationsStore.getStations,
+        date,
+      );
+      num++;
+
+      if (!disabledDate(date as Date) || disabledDate(dayjs().toDate()))
+        snapshotMap.set(makeKey(date as Date, num), copy);
+
+      if (num === timeRotation.value) {
+        num = 0;
+        date = dayjs(date).add(1, "day").toDate();
+      }
     }
 
-    const copy = generateSchedule(
-      stationsStore,
-      availableWorkers.value,
-      stationsStore.getStations,
-      date,
-    );
-    num++;
+    const defaultDate = start || new Date();
+    const defaultRotation = +FIRST_LIST.slice(-1);
+    const defaultKey = makeKey(defaultDate, defaultRotation);
 
-    if (!disabledDate(date as Date) || disabledDate(dayjs().toDate()))
-      snapshotMap.set(makeKey(date as Date, num), copy);
+    stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
+    stationsStore.replaceAssignments(defaultKey);
+    workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
+    stationsStore.updateFutureStationHistory(date,timeRotation.value,makeKey);
+    stationsStore.switchApprovmentFlag(false);
 
-    if (num === timeRotation.value) {
-      num = 0;
-      date = dayjs(date).add(1, "day").toDate();
-    }
-  }
+    perfomanceLoader.value = false;
+  }, 0);
 
-  const defaultDate = start || new Date();
-  const defaultRotation = +FIRST_LIST.slice(-1);
-  const defaultKey = makeKey(defaultDate, defaultRotation);
 
-  stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
-  stationsStore.replaceAssignments(defaultKey);
-  workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
-  stationsStore.switchApprovmentFlag(false);
 };
 
 watch(
@@ -206,5 +216,13 @@ watch(
   flex-grow: 1;
   align-self: center;
 
+}
+
+:deep(.el-loading-mask) {
+  mix-blend-mode: multiply;
+}
+
+.el-button.is-disabled {
+  --el-button-text-color: var(--neutral-900);
 }
 </style>

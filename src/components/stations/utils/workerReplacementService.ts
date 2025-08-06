@@ -58,9 +58,7 @@ const findWorkerAsLastResort = (
           b.station_history.filter((e) => e.station === stationId).length,
       )[0];
 
-  // debugger;
-
-  return newReplaceWith;
+   return newReplaceWith;
 };
 
 const findWorkerForSwap = (

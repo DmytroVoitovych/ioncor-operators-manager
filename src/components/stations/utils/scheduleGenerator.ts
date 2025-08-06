@@ -111,8 +111,8 @@ const generateSchedule = (
             )!;
 
             if (stp && !stationsKeys.includes(stp)) {
-              //!!!!!!!!!!!!!!!
-              if (!candidateForSwap) debugger;
+
+              if (!candidateForSwap) console.error('edge case');
               removePersonFromStation(candidateForSwap?.id, stationId);
               assignWorkerToStation(
                 worker.id,
@@ -164,10 +164,9 @@ const generateSchedule = (
   const workersStore = useWorkersStore();
   availableWorkers.forEach((worker) =>{
     const forMonth = -124;
-
     workersStore.setWorkerHistory(worker.id, worker.current_station, date);
     if(worker.station_history?.length >= 124) worker.station_history = worker.station_history.slice(forMonth);
-  }
+    }
   );
 
   if (stationsKeys.length) stationsStore.enable_extra = true;

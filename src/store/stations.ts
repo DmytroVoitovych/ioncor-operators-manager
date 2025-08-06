@@ -94,14 +94,14 @@ export const useStationsStore = defineStore("stations", {
       }
     },
 
-    unassignPerson(stationId: StationId, slotKey: SideKey, personId: string){
-    const workersStore = useWorkersStore();
-    const worker = workersStore.getWorkersById(personId);
-    if(!worker) return;
+    unassignPerson(stationId: StationId, slotKey: SideKey, personId: string) {
+      const workersStore = useWorkersStore();
+      const worker = workersStore.getWorkersById(personId);
+      if (!worker) return;
 
-      removePersonFromStation(personId,stationId);
+      removePersonFromStation(personId, stationId);
       this.removeHistory(worker);
-      this.assignments[stationId][slotKey] = '';
+      this.assignments[stationId][slotKey] = "";
       workersStore.unassignOperator(worker);
     },
 
@@ -121,42 +121,69 @@ export const useStationsStore = defineStore("stations", {
       const date = dayjs(workersStore.globalKey.split("_")[0]);
       this.executeWorkerAssignment(stationId, slotKey, personId, date.toString());
     },
-    addWorkerInSnapshot(keyGlobal:string,newWorker:Operator,){
-    const currentDate = keyGlobal;
+    addWorkerInSnapshot(keyGlobal: string, newWorker: Operator) {
+      const currentDate = keyGlobal;
 
-     for (const [key] of this.getSnapshotMap) {
-        if(!key) break;
+      for (const [key] of this.getSnapshotMap) {
+        if (!key) break;
 
         const snapData = this.snapshot[key];
         const worker = snapData.snp_workers?.find((e) => e.id === newWorker?.id);
-       const keyDate = dayjs(key.split('_')[0]);
+        const keyDate = dayjs(key.split("_")[0]);
 
-        if (worker &&  (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate))) continue;
+        if (worker && (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate))) continue;
 
-        this.snapshot[key].snp_workers = [...this.snapshot[key].snp_workers,newWorker];
-
-     }
+        this.snapshot[key].snp_workers = [...this.snapshot[key].snp_workers, newWorker];
+      }
     },
-    deleteWorkerFromSnapshot(keyGlobal:string,personId: string,){
-    const currentDate = keyGlobal;
+    deleteWorkerFromSnapshot(keyGlobal: string, personId: string) {
+      const currentDate = keyGlobal;
 
-     for (const [key] of this.getSnapshotMap) {
-        if(!key) break;
+      for (const [key] of this.getSnapshotMap) {
+        if (!key) break;
 
         const snapData = this.snapshot[key];
         const worker = snapData.snp_workers?.find((e) => e.id === personId);
         const workerId = snapData.snp_workers?.findIndex((e) => e.id === personId);
-        const keyDate = dayjs(key.split('_')[0]);
+        const keyDate = dayjs(key.split("_")[0]);
 
-        if (workerId === -1 &&  (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate))) continue;
-        if(worker?.current_station !== 'unassigned' as StationNumber ){
-
-        const snapAssignment = snapData.snp_assignments[worker!.current_station];
-        const side = snapAssignment?.left === personId?'left':'right';
-        this.snapshot[key].snp_assignments[worker!.current_station][side] = 'Extra';
+        if (workerId === -1 && (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate)))
+          continue;
+        if (worker?.current_station !== ("unassigned" as StationNumber)) {
+          const snapAssignment = snapData.snp_assignments[worker!.current_station];
+          const side = snapAssignment?.left === personId ? "left" : "right";
+          this.snapshot[key].snp_assignments[worker!.current_station][side] = "Extra";
         }
-        this.snapshot[key].snp_workers.splice(workerId,1);
-     }
+        this.snapshot[key].snp_workers.splice(workerId, 1);
+      }
+    },
+    updateFutureStationHistory(date:Date,timeRotation:number,makeKey: (date: Date, rotation: number) => string) {
+      const lastAddedDate = dayjs(date).subtract(1, "day").toDate();
+      const lastAddedKey = makeKey(lastAddedDate, timeRotation);
+
+      if (this.getSnapshotMap.has(lastAddedKey)) {
+        (this.getSnapshotMap.get(lastAddedKey)!.snp_workers as Operator[]).forEach(
+          (worker) => {
+            for (const [key] of this.getSnapshotMap) {
+              const keyDate = dayjs(key.split("_")[0]);
+              const snapData = this.snapshot[key];
+              const futureWorker: Operator | undefined = snapData.snp_workers?.find(
+                (e) => e.id === worker?.id,
+              );
+
+              if (!futureWorker || !keyDate.isAfter(lastAddedDate)) continue;
+              const index = futureWorker.station_history?.findIndex((e) =>
+                dayjs(e.date).isSame(lastAddedDate),
+              );
+              const dateForReplace = worker.station_history?.slice(timeRotation);
+              const dateLength =
+                futureWorker.station_history?.filter((e) => dayjs(lastAddedDate).isSame(e.date))
+                  ?.length || 0;
+              futureWorker.station_history.splice(index, dateLength, ...dateForReplace);
+            }
+          },
+        );
+      }
     },
     updateStationHistory(date: string, personId: string, stationId: StationId) {
       const cycleDate = dayjs(date).format("YYYY-MM-DD");
@@ -255,13 +282,14 @@ export const useStationsStore = defineStore("stations", {
           this.stations[worker.current_station] === 2 && checkStation?.left && checkStation?.right;
         const oneSide = this.stations[worker.current_station] === 1 && checkStation?.right;
 
-        if (twoSide || oneSide || worker.status !== 'available') worker.current_station = "unassigned" as StationNumber;
+        if (twoSide || oneSide || worker.status !== "available")
+          worker.current_station = "unassigned" as StationNumber;
         else this.outerAssignByTable(worker.current_station, side, worker.id);
       }
     },
 
     getStationsFromDB() {
-    return  Promise.resolve(supabase.from("stationslist").select("stations").single())
+      return Promise.resolve(supabase.from("stationslist").select("stations").single())
         .then((e) => {
           this.stations = Object.assign(this.stations, e.data?.stations || {});
         })
@@ -269,38 +297,41 @@ export const useStationsStore = defineStore("stations", {
         .finally(() => console.log("fi", this.stations));
     },
     getFreshSnapShots(key: string) {
-
-      const nightShiftProtection = dayjs(key.split("_")[0]).subtract(1, "day").format('YYYY-MM-DD') + FIRST_LIST;
+      const nightShiftProtection =
+        dayjs(key.split("_")[0]).subtract(1, "day").format("YYYY-MM-DD") + FIRST_LIST;
       Promise.resolve(
         supabase.rpc("get_snapshot_keys_from_date", {
           from_key: nightShiftProtection,
           max_keys: 150,
         }),
-      ).then((e) => {
+      )
+        .then((e) => {
+          if (!e?.data?.[key]) {
+            const workerStore = useWorkersStore();
+            this.assignments = {};
+            workerStore.workers?.forEach(this.cleanupDuplicateAssignments);
+            this.snapshot = e.data;
+            console.log(this.snapshot);
+            return;
+          }
 
-        if (!e?.data?.[key]) {
-          const workerStore = useWorkersStore();
-          this.assignments = {};
-          workerStore.workers?.forEach(this.cleanupDuplicateAssignments);
           this.snapshot = e.data;
-          console.log(this.snapshot);
-          return;
-        }
-
-        this.snapshot = e.data;
-        this.assignments = this.snapshot[key].snp_assignments;
-        useWorkersStore().workers = this.snapshot[key].snp_workers;
-      });
+          this.assignments = this.snapshot[key].snp_assignments;
+          useWorkersStore().workers = this.snapshot[key].snp_workers;
+        })
+        .catch((err) => console.log(err));
     },
     saveNewSnapshot() {
       Promise.resolve(
         supabase.rpc("merge_station_snapshot", {
           partial_snapshot: this.snapshot,
         }),
-      ).finally(() => console.log("ssss"));
+      )
+        .catch((err) => console.log(err))
+        .finally(() => console.log("ssss"));
     },
   },
-
-},
-
-);
+  persist: {
+    pick: ["assignments"],
+  },
+});
