@@ -11,7 +11,7 @@
 <script lang="ts" setup>
 import { dayjs } from "element-plus";
 import { storeToRefs } from "pinia";
-import { computed,onMounted,  ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { FIRST_LIST, ONE_DAY } from "./constants";
@@ -80,9 +80,9 @@ watch(
 );
 
 
-onMounted(() => {
-stationStore.getFreshSnapShots(key.value);
-});
+// onMounted(() => { ??? must be tested
+// stationStore.getFreshSnapShots(key.value);
+// });
 
 watch(options, (newOptions) => {
   if (newOptions.length === 0) return;

@@ -19,13 +19,7 @@ export const useWorkersStore = defineStore("workersStore", {
     globalKey: "",
   }),
 
-  getters: {
-    // getWorkersById: (state) => {
-    //   return (id: string): Operator | undefined => {
-    //     return state.workers.find((worker) => worker.id === id);
-    //   };
-    // },
-  },
+  
   actions: {
     setGlobalKey(key: string) {
       this.globalKey = key;
@@ -85,8 +79,7 @@ export const useWorkersStore = defineStore("workersStore", {
     },
 
     getWorkers() {
-      this.loading = true;
-      this.error = null;
+     this.error = null;
 
       return Promise.resolve(supabase.from("operatorslist").select("*"))
         .then(({ data, error }) => {
@@ -94,7 +87,7 @@ export const useWorkersStore = defineStore("workersStore", {
           else this.error = error.message;
         })
         .catch((err) => console.log(err))
-        .finally(() => (this.loading = false));
+        .finally();
     },
     deleteWorker(id: string, loadingHandler: (loadingState: boolean) => void) {
       loadingHandler(true);

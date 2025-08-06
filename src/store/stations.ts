@@ -94,14 +94,6 @@ export const useStationsStore = defineStore("stations", {
       }
     },
 
-    initializeStateFromWorkersStore() {
-      // const workersStore = useWorkersStore();
-      // workersStore.workers.forEach(({id,current_station})=>{
-      //  const side = this.getStationsMandatoryAmount(this.getStations[current_station]);
-      //  this.assignPerson(current_station,side,id);
-      // })
-    },
-
     unassignPerson(stationId: StationId, slotKey: SideKey, personId: string){
     const workersStore = useWorkersStore();
     const worker = workersStore.getWorkersById(personId);
@@ -269,7 +261,7 @@ export const useStationsStore = defineStore("stations", {
     },
 
     getStationsFromDB() {
-      Promise.resolve(supabase.from("stationslist").select("stations").single())
+    return  Promise.resolve(supabase.from("stationslist").select("stations").single())
         .then((e) => {
           this.stations = Object.assign(this.stations, e.data?.stations || {});
         })
@@ -286,7 +278,7 @@ export const useStationsStore = defineStore("stations", {
         }),
       ).then((e) => {
 
-        if (!e.data[key]) {
+        if (!e?.data?.[key]) {
           const workerStore = useWorkersStore();
           this.assignments = {};
           workerStore.workers?.forEach(this.cleanupDuplicateAssignments);

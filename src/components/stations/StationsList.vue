@@ -3,7 +3,6 @@
     <template #header>
       <StationHeader v-model:now="now" />
     </template>
-
     <ul class="stationsList" ref="screenshotArea">
       <li class="stationItem" v-for="(station, key) in store.getStations" :key="key">
         <div class="selectBlock">
@@ -54,7 +53,7 @@
 
 <script lang="ts" setup>
 import { Location, Plus } from "@element-plus/icons-vue";
-import { computed, onMounted, ref, useTemplateRef } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 import { Operator, StationId } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
@@ -63,6 +62,7 @@ import { dayjs } from "element-plus";
 import { findWorkerById } from "./utils/workerUtils";
 import { templateRef } from "@vueuse/core";
 import ButtonMakeScreen from "./ButtonMakeScreen.vue";
+
 
 const LEFT_SIDE_KEY = "left";
 const Right_SIDE_KEY = "right";
@@ -124,7 +124,6 @@ const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: stri
   store.unassignPerson(stationId, slotKey, personId);
 };
 
-onMounted(() => store.initializeStateFromWorkersStore());
 </script>
 <style lang="scss" scoped>
 .el-card {

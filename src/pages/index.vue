@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="common-layout">
+  <div class="common-layout" >
     <el-container>
       <section class="stationsSection">
         <h1 class="text-preset-5 sectionHeadline">Stations List</h1>
@@ -13,7 +13,10 @@
     </el-container>
   </div>
 </template>
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+
+
+</script>
 
 <style scoped>
 .el-container {

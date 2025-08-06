@@ -77,7 +77,7 @@ type Operator = User & {
   role: "operator";
   status: Status;
   known_stations: StationNumber[];
-  station_history: StationVisit[] | [];
+  station_history: StationVisit[];
   current_station: StationNumber;
   visited_stations: StationNumber[];
 };

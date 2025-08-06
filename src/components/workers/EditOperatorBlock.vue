@@ -70,15 +70,17 @@
 
 <script lang="ts" setup>
 import { useWorkersStore } from "~/store/workers";
-import { Operator, StationNumber, STATIONS, Status } from "~/maintypes/types";
-import { computed, reactive, ref, watch } from "vue";
+import { Operator, StationNumber,  Status } from "~/maintypes/types";
+import { computed,  ref, watch } from "vue";
 import { CheckboxValueType } from "element-plus";
+import { useStationsStore } from "~/store/stations";
 
 const props = defineProps<{
   operatorId: string;
 }>();
 
 const store = useWorkersStore();
+const stationStore = useStationsStore();
 const dialogTableVisible = ref(false);
 
 const { updateWorker } = store;
@@ -86,7 +88,7 @@ const { updateWorker } = store;
 const operator = ref<Operator>({} as Operator);
 
 const formOperatorUpdate = ref<
-  Omit<Operator, "id" | "created_at" | "updated_at" | "role" | "station_history">
+  Omit<Operator, "id" | "created_at" | "updated_at" | "role" | "station_history" | "visited_stations">
 >({
   name: "",
   surname: "",
@@ -95,16 +97,13 @@ const formOperatorUpdate = ref<
   current_station: "unassigned" as StationNumber,
 });
 
-const stationObject = reactive(STATIONS);
 const checkAll = ref(false);
 const indeterminate = ref(false);
 const isChanged = ref(false);
 const loading = ref(false);
 
 const STATIONS_LIST = computed(() => {
-  return Object.keys(stationObject).filter(
-    (key) => typeof stationObject[key as keyof typeof stationObject] !== "function",
-  );
+  return Object.keys(stationStore.getStations);
 });
 
 const updateFormFromOperator = (operatorData: Operator) => {

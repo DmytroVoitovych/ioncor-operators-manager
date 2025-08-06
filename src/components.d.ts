@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppLogo: typeof import('./components/common/AppLogo.vue')['default']
+    AppPreloadLayout: typeof import('./components/layout/AppPreloadLayout.vue')['default']
     AuthForm: typeof import('./components/shared/AuthForm.vue')['default']
     BarPopover: typeof import('./components/common/BarPopover.vue')['default']
     BaseHeader: typeof import('./components/layout/BaseHeader.vue')['default']
@@ -30,6 +31,7 @@ declare module 'vue' {
     ElDivider: typeof import('element-plus/es')['ElDivider']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
+    ElIcon: typeof import('element-plus/es')['ElIcon']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElMain: typeof import('element-plus/es')['ElMain']
     ElOption: typeof import('element-plus/es')['ElOption']
@@ -39,6 +41,8 @@ declare module 'vue' {
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElSegmented: typeof import('element-plus/es')['ElSegmented']
     ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElSelectV2: typeof import('element-plus/es')['ElSelectV2']
+    ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElTab: typeof import('element-plus/es')['ElTab']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
@@ -47,6 +51,7 @@ declare module 'vue' {
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElText: typeof import('element-plus/es')['ElText']
     ElUpload: typeof import('element-plus/es')['ElUpload']
+    EnteringPreloaderLayout: typeof import('./components/layout/EnteringPreloaderLayout.vue')['default']
     GoogleBlock: typeof import('./components/authcomponents/GoogleBlock.vue')['default']
     GreetingsBlock: typeof import('./components/GreetingsBlock.vue')['default']
     InputAuthBlock: typeof import('./components/authcomponents/InputAuthBlock.vue')['default']
@@ -64,6 +69,7 @@ declare module 'vue' {
     MoodTextArea: typeof import('./components/shared/MoodTextArea.vue')['default']
     OperatorCreation: typeof import('./components/workers/OperatorCreation.vue')['default']
     OperatorForm: typeof import('./components/shared/OperatorForm.vue')['default']
+    PasswordForm: typeof import('./components/auth/PasswordForm.vue')['default']
     ProfilePopover: typeof import('./components/profile/ProfilePopover.vue')['default']
     ReflectionReport: typeof import('./components/reports/ReflectionReport.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
@@ -81,5 +87,8 @@ declare module 'vue' {
     TrackingBlock: typeof import('./components/shared/TrackingBlock.vue')['default']
     UploadComponent: typeof import('./components/authcomponents/UploadComponent.vue')['default']
     WorkersList: typeof import('./components/workers/WorkersList.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

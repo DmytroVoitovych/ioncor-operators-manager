@@ -59,24 +59,24 @@
 import { templateRef } from "@vueuse/core";
 import { CheckboxValueType, FormInstance } from "element-plus";
 import { watch } from "vue";
-import { computed, reactive, ref } from "vue";
-import { StationNumber, STATIONS, UserCreationData, Status } from "~/maintypes/types";
+import { computed,ref } from "vue";
+import { StationNumber,UserCreationData, Status } from "~/maintypes/types";
+import { useStationsStore } from "~/store/stations";
 
 defineProps<{
   loading: boolean;
 }>();
 
+const stationStore = useStationsStore();
+
 const formRef = templateRef<FormInstance>("formRef");
 
-const stationObject = reactive(STATIONS);
 const dialogFormVisible = ref(false);
 const checkAll = ref(false);
 const indeterminate = ref(false);
 
 const STATIONS_LIST = computed(() => {
-  return Object.keys(stationObject).filter(
-    (key) => typeof stationObject[key as keyof typeof stationObject] !== "function",
-  );
+  return Object.keys(stationStore.getStations);
 });
 
 const handleClose = () => {
