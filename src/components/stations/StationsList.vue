@@ -11,7 +11,8 @@
             v-if="+station === 2" placeholder="Assign to station">
             <el-option v-for="person in availablePeople(key).value" :key="person.id"
               :label="`${person.name} ${person.surname}`" :value="person.id">
-              {{ recentlyVisitedMark(person, `${person.name} ${person.surname}`, key) }}
+              {{ getSpecialMark(person, getStationSelect(key, LEFT_SIDE_KEY).value, key, `${person.name}
+              ${person.surname}`) }}
             </el-option>
           </el-select>
           <ButtonClear v-if="getStationSelect(key, LEFT_SIDE_KEY).value"
@@ -91,10 +92,15 @@ const availablePeople = (stationId: StationId) =>
     ),
   );
 
+
 const recentlyVisitedMark = (person: Operator, label: string, station: StationId) =>
   computed(() => {
+
+    const personFromMaxSlots = store.snapshot?.[now.value + `_${store.getMaxSlot}`]?.snp_workers.find(
+      (p) => p.id === person.id,
+    );
     const isLengthAcceptable = person.known_stations.length > 4;
-    const isPersonAttend = person?.visited_stations?.slice(-4)?.includes(station);
+    const isPersonAttend = personFromMaxSlots?.visited_stations?.slice(-4)?.includes(station) || person?.visited_stations?.slice(-4)?.includes(station);
     const isAnotherPerson = person.current_station !== station;
     const isMarkMandatory = isLengthAcceptable && isPersonAttend && isAnotherPerson;
 
@@ -109,7 +115,7 @@ const reverseSwapMark = (person: Operator, currentPerson: Operator | 'Extra' | '
     const isSuitablePerson = !!currentPerson && currentPerson !== 'Extra' && person.current_station !== 'unassigned' as StationId;
     const isMarkMandatory = isAnotherPerson && isSuitablePerson && currentPerson?.known_stations.includes(person.current_station);
 
-    return isMarkMandatory ? ' 👥🔄 ' : '';
+    return isMarkMandatory ? ' 👥🔄  ' + person.current_station : '';
 
   });
 
@@ -121,7 +127,12 @@ const getSpecialMark = (person: Operator, currentPersonId: string | 'Extra' | ''
   ;
 
 const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: string) => {
-  store.unassignPerson(stationId, slotKey, personId);
+  if (store.getSnapshotMap.has(operatorStore.globalKey)) {
+
+  if (personId !== 'Extra') store.executeWorkerAssignment('unassigned' as StationId, slotKey, personId, now.value);
+
+  }
+  else store.unassignPerson(stationId, slotKey, personId);
 };
 
 </script>

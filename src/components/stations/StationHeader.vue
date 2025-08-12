@@ -4,7 +4,8 @@
     <el-date-picker v-model="now" type="date" placeholder="Pick a day" value-format="YYYY-MM-DD" :clearable="false"
       :editable="false" :disabled-date="setDisabledDate" />
     <h2 v-show="options.length" class="text-preset-6">Shift time slot segments:</h2>
-    <el-segmented :key="segmentedKey" aria-label="Shift segments" v-model="timeSlot" :options="options" :props="props" />
+    <el-segmented :key="segmentedKey" aria-label="Shift segments" v-model="timeSlot" :options="options"
+      :props="props" />
   </div>
 </template>
 
@@ -15,13 +16,15 @@ import { computed, ref, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { FIRST_LIST, ONE_DAY } from "./constants";
+import { clone } from "./utils/scheduleGenerator";
+
 
 
 const stationStore = useStationsStore();
 const workerStore = useWorkersStore();
 const now = defineModel("now", { default: dayjs().format("YYYY-MM-DD") });
 
-const { getSnapshotMap } = storeToRefs(stationStore);
+const { getSnapshotMapSize, getSnapshotKeys, getSnapshotMap } = storeToRefs(stationStore);
 
 const props = {
   label: "period",
@@ -31,20 +34,20 @@ const props = {
 const segmentedKey = ref(0);
 
 const options = computed(() => {
-  if (!getSnapshotMap.value.size || getSnapshotMap.value.size === 1) return [];
-  return getSnapshotMap.value.keys().reduce((acc: Record<string, string>[], key: string) => {
-    const optObj = { period: `${key.at(-1)} time slot `, map_key: key };
 
-    if (key.includes(now.value)) acc.push(optObj);
-    return acc;
-  }, []);
+  if (!getSnapshotMapSize.value || getSnapshotMapSize.value === 1) return [];
+
+  return getSnapshotKeys.value
+    .filter(key => key.includes(now.value))
+    .map(key => ({ period: `${key.at(-1)} time slot`, map_key: key }));
 });
+
 
 const setDisabledDate = (time: Date) => {
   const formatedDate = dayjs(time).format("YYYY-MM-DD");
   const isDateAllowed = time.getTime() < Date.now() - (ONE_DAY * 2);
   const today = formatedDate === dayjs().format("YYYY-MM-DD");
-  if(today) return;
+  if (today) return;
 
   return (
     (isDateAllowed ||
@@ -57,41 +60,44 @@ const key = computed(() => now.value + (timeSlot.value?.slice(-2) || FIRST_LIST)
 
 watch([timeSlot, now], () => {
 
-  if (!getSnapshotMap.value.has(key.value)){
-    workerStore.getWorkers().finally(()=> stationStore.getFreshSnapShots(key.value)); return;
-  };
-  timeSlot.value = key.value;
+  const snapshot = stationStore.getSnapshotMap.get(key.value);
 
-  workerStore.replaceWorkers(getSnapshotMap.value.get(key.value)!.snp_workers);
-  stationStore.replaceAssignments(key.value);
+  if (!snapshot) {
+  stationStore.assignments = {};
+  workerStore.getWorkers().finally(()=>stationStore.getFreshSnapShots(key.value));
+
+  return;
+  };
+
+  workerStore.workers = clone(snapshot.snp_workers);
+  stationStore.assignments = clone(snapshot.snp_assignments);
+
 });
 
-watch(now,(n,o)=>{
- if(n === o) return;
- timeSlot.value = now.value + FIRST_LIST;
+watch(now, (n, o) => {
+  if (n === o) return;
+  timeSlot.value = now.value + FIRST_LIST;
 });
 
 watch(
   key,
   (n) => {
     workerStore.setGlobalKey(n);
-    },
+  },
   { immediate: true },
 );
 
 
-// onMounted(() => { ??? must be tested
-// stationStore.getFreshSnapShots(key.value);
-// });
-
 watch(options, (newOptions) => {
+
   if (newOptions.length === 0) return;
 
   const currentExists = newOptions.some(option => option.map_key === timeSlot.value);
 
   if (!currentExists) timeSlot.value = newOptions[0]?.map_key;
   segmentedKey.value++;
-}, { flush: 'post' });
+}, { flush: 'post', });
+
 </script>
 
 <style scoped lang="scss">

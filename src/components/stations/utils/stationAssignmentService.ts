@@ -13,10 +13,8 @@ const removePersonFromStation = (personId: string, stationId: StationNumber) => 
 
 const assignWorkerToStation = (workerId: string, targetStation: StationNumber, side: SideKey) => {
   const stationsStore = useStationsStore();
-  // const workersStore = useWorkersStore();
 
   stationsStore.assignPerson(targetStation, side, workerId);
-  // workersStore.setWorkerHistory(workerId, targetStation);
 };
 
 export { assignWorkerToStation, removePersonFromStation };

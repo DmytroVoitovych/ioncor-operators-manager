@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRaw, watch } from "vue";
+import { computed, markRaw, ref, toRaw, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { generateSchedule } from "./utils/scheduleGenerator";
@@ -48,7 +48,7 @@ import { dayjs } from "element-plus";
 import { FIRST_LIST, ONE_DAY } from "./constants";
 import { Operator } from "~/maintypes/types";
 import { useTimeoutFn } from "@vueuse/core";
-
+import shuffle from "lodash.shuffle";
 
 const workersStore = useWorkersStore();
 const stationsStore = useStationsStore();
@@ -58,8 +58,8 @@ const perfomanceLoader = ref(false);
 defineProps<{ headerDate: string }>();
 
 const availableWorkers = computed(() =>
-  workersStore.workers
-    .filter((worker) => worker.status === "available")
+  shuffle(workersStore.workers
+    .filter((worker) => worker.status === "available"))
     .toSorted((a, b) => a.known_stations.length - b.known_stations.length),
 );
 
@@ -85,10 +85,11 @@ const makeKey = (date: Date, rotation: number) => `${dayjs(date).format("YYYY-MM
 
 const rewriteHistory = (workers: Operator[], date: Date) => {
   const cycleDate = dayjs(date).format("YYYY-MM-DD");
+
   workers.forEach((worker) => {
     if (!worker.station_history?.length || worker.status !== "available") return;
     worker.station_history = worker.station_history
-      ?.filter((entry) => !dayjs(entry.date).format("YYYY-MM-DD").includes(cycleDate))
+      ?.filter((entry) => dayjs(entry.date).isBefore(cycleDate))
       .toSorted((a, b) => dayjs(a.date).toDate().getTime() - dayjs(b.date).toDate().getTime());
   });
 };
@@ -96,11 +97,10 @@ const rewriteHistory = (workers: Operator[], date: Date) => {
 const rewriteSnapshot = (date: Date) => {
   const cycleDate = dayjs(date).format("YYYY-MM-DD");
   for (const [key] of stationsStore.getSnapshotMap) {
+
     if (key.startsWith(cycleDate)) delete stationsStore.snapshot[key];
   }
 };
-
-
 
 const handleDateRangeChange = (e: [Date, Date] | null) => {
   if (!e) return;
@@ -110,6 +110,10 @@ const handleDateRangeChange = (e: [Date, Date] | null) => {
   period.value = endDate.diff(startDate, 'day') + 1;
 };
 
+const isTodayWeekend = () => {
+  const day = dayjs().day();
+  return day === 0 || day === 6;
+};
 
 
 const runScheduleGenerator = (start?: Date, amount: number = 1) => {
@@ -121,13 +125,14 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
     let num = 0;
     let date = start || new Date();
 
-
     for (let index = 0; index < amount; index++) {
+
+      if (disabledDate(date as Date) && !isTodayWeekend()) { date = dayjs(date).add(1, "day").toDate(); continue };
+
       if (!num) {
         rewriteHistory(toRaw(workersStore.workers), date);
         rewriteSnapshot(date);
       }
-
       const copy = generateSchedule(
         stationsStore,
         availableWorkers.value,
@@ -136,9 +141,9 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
       );
       num++;
 
-      if (!disabledDate(date as Date) || disabledDate(dayjs().toDate()))
+      if (!disabledDate(date as Date) || isTodayWeekend()) {
         snapshotMap.set(makeKey(date as Date, num), copy);
-
+      }
       if (num === timeRotation.value) {
         num = 0;
         date = dayjs(date).add(1, "day").toDate();
@@ -149,27 +154,25 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
     const defaultRotation = +FIRST_LIST.slice(-1);
     const defaultKey = makeKey(defaultDate, defaultRotation);
 
-    stationsStore.snapshot = Object.assign(stationsStore.snapshot, Object.fromEntries(snapshotMap));
+    stationsStore.snapshot = Object.assign(markRaw(stationsStore?.snapshot || {}), Object.fromEntries(snapshotMap));
     stationsStore.replaceAssignments(defaultKey);
-    workersStore.replaceWorkers(stationsStore.getSnapshotMap.get(defaultKey)!.snp_workers);
-    stationsStore.updateFutureStationHistory(date,timeRotation.value,makeKey);
+    workersStore.replaceWorkers(defaultKey);
+    stationsStore.triggerSnapshot();
+    stationsStore.updateFutureStationHistory(date, timeRotation.value, makeKey);
     stationsStore.switchApprovmentFlag(false);
-
     perfomanceLoader.value = false;
   }, 0);
-
-
 };
 
 watch(
   absentAmount,
   (n) => {
+
     if (stationsStore.stations["200"] === 1 && !n)
       stationsStore.stations.changeRequiredPeople("200", 2);
     if (n) stationsStore.stations.changeRequiredPeople("200", 1);
-    console.log(stationsStore.getStations);
   },
-  { immediate: true },
+  { immediate: true }
 );
 </script>
 

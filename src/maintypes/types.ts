@@ -1,3 +1,5 @@
+import { useStationsStore } from "~/store/stations";
+
 export enum Status {
   AVAILABLE = "available",
   SICK_LEAVE = "sick-leave",
@@ -7,6 +9,8 @@ export enum Status {
 }
 
 type StationId = `${number}` | `${number}${string}`;
+
+type OperatorAbsence = StationId & Status;
 
 interface StationMap {
   [key: StationId]: number;
@@ -42,7 +46,7 @@ export const STATIONS: StationCollection = {
   },
   changeRequiredPeople(name: StationId, requiredPeople: number) {
     this[name] = requiredPeople;
-  },
+    },
 };
 
 type StationNumber = Exclude<
@@ -93,4 +97,5 @@ export type {
   StationNumber,
   StationId,
   StationMap,
+  OperatorAbsence
 };

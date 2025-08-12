@@ -2,7 +2,7 @@
   <el-table
     :default-sort="{ prop: 'name', order: 'ascending' }"
     :row-class-name="tableRowClassName"
-    :data="tableData"
+    :data="store.workers"
     style="width: 100%"
     @selection-change="extractIds"
     show-overflow-tooltip
@@ -81,11 +81,10 @@ import { reactive, ref } from "vue";
 import dayjs from "dayjs";
 import { useWorkersStore } from "~/store/workers";
 import { Operator } from "~/maintypes/types";
-import { storeToRefs } from "pinia";
 import { InfoFilled } from "@element-plus/icons-vue";
 
 const store = useWorkersStore();
-const { workers: tableData } = storeToRefs(store);
+
 const { deleteWorker } = store;
 const multipleSelection = ref<string[]>([]);
 
@@ -105,6 +104,8 @@ const tableRowClassName = ({ row }: { row: Operator }) => {
 const filterTag = (value: string, row: Operator) => {
   return row.status === (value as unknown);
 };
+
+
 </script>
 
 <style scoped>

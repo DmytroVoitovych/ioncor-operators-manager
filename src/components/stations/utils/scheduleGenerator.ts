@@ -9,14 +9,8 @@ import { assignWorkerToStation, removePersonFromStation } from "./stationAssignm
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { toRaw } from "vue";
-import cloneDeep from "lodash.clonedeep";
-//  const firstW =   availableWorkers.filter(e=>e.known_stations.includes('130')).toSorted(
-//       (a, b) =>
-//         a.station_history?.filter((st) => st.station === "130").length -
-//         b.station_history?.filter((st) => st.station === "130").length,
-//     )[0]; experimental if some problem will be detected sort will be removed
-
-const test = [];
+import rfdc from "rfdc";
+export const clone = rfdc({ circles: false });
 
 const generateSchedule = (
   stationsStore: ReturnType<typeof useStationsStore>,
@@ -25,13 +19,18 @@ const generateSchedule = (
   date: Date,
 ) => {
   const station_130 = "130";
-  const station130Worker = availableWorkers
-    .filter((e) => e.known_stations.includes(station_130))
-    .toSorted(
-      (a, b) =>
-        a.station_history?.filter((st) => st.station === station_130).length -
-        b.station_history?.filter((st) => st.station === station_130).length,
-    )[0];
+  const station130Worker = shuffle(
+    availableWorkers.filter(
+      (e) =>
+        e.known_stations.includes(station_130) &&
+        e.station_history?.at(-1)?.station !== station_130,
+    ),
+  ).toSorted((a, b) => {
+    return (
+      a.station_history?.filter((st) => st.station === station_130).length -
+      b.station_history?.filter((st) => st.station === station_130).length
+    );
+  })[0];
 
   const workersList = new Set(availableWorkers);
 
@@ -51,7 +50,16 @@ const generateSchedule = (
   };
 
   const getPossibleStations = (worker: Operator) =>
-    shuffle(worker.known_stations.filter((e) => !worker.visited_stations?.includes(e)));
+    shuffle(
+      worker.known_stations.filter(
+        (e) =>
+          !worker.visited_stations?.includes(e) && worker.station_history.at(-1)?.station !== e,
+      ),
+    ).toSorted((a, b) => {
+      const visitsA = worker.station_history.filter((st) => st.station === a).length;
+      const visitsB = worker.station_history.filter((st) => st.station === b).length;
+      return visitsA - visitsB;
+    });
 
   const removeStationIfFull = (
     stationId: StationNumber,
@@ -78,11 +86,14 @@ const generateSchedule = (
     for (let i = 0; i < stationsKeys.length; i++) {
       const stationId: StationNumber = stationsKeys[i];
       const isKnown = worker.known_stations.includes(stationId as StationNumber);
-      const isVisited = worker.visited_stations?.includes(stationId);
+      const isVisited =
+        worker.visited_stations?.includes(stationId) ||
+        worker.station_history.at(-1)?.station === stationId;
       const requiresSwapForLastStation = i === stationsKeys.length - 1 && (!isKnown || isVisited);
 
       if (requiresSwapForLastStation) {
         const possibleStations = getPossibleStations(worker);
+
         const replaceWith = getSuitableWorkersForReplacement(
           availableWorkers,
           stationId,
@@ -106,13 +117,22 @@ const generateSchedule = (
             );
 
             // added test for exluded 130
-            const stp = possibleStations.find(
-              (st) => stationsKeys.includes(st) && st !== station_130,
-            )!;
+            const stp = shuffle(
+              possibleStations.filter(
+                (st) =>
+                  stationsKeys.includes(st) &&
+                  st !== station_130 &&
+                  st !== worker.station_history?.at(-1)?.station,
+              ),
+            ).toSorted((a, b) => {
+              const visitsA = worker.station_history.filter((st) => st.station === a).length;
+              const visitsB = worker.station_history.filter((st) => st.station === b).length;
+              return visitsA - visitsB;
+            })[0];
 
-            if (stp && !stationsKeys.includes(stp)) {
-
-              if (!candidateForSwap) console.error('edge case');
+            if (stp === worker.station_history?.at(-1)?.station || !stp) debugger;
+            if (!stp) {
+              if (!candidateForSwap) console.error("edge case");
               removePersonFromStation(candidateForSwap?.id, stationId);
               assignWorkerToStation(
                 worker.id,
@@ -153,7 +173,7 @@ const generateSchedule = (
       }
 
       if (!isKnown) continue;
-      if (worker.visited_stations?.includes(stationId)) continue;
+      if (worker.station_history.at(-1)?.station === stationId) continue;
 
       assignWorkerToStation(worker.id, stationId, choseSide(stationId));
       removeStationIfFull(stationId, stations, stationsKeys);
@@ -162,19 +182,20 @@ const generateSchedule = (
   }
 
   const workersStore = useWorkersStore();
-  availableWorkers.forEach((worker) =>{
+  availableWorkers.forEach((worker) => {
     const forMonth = -124;
     workersStore.setWorkerHistory(worker.id, worker.current_station, date);
-    if(worker.station_history?.length >= 124) worker.station_history = worker.station_history.slice(forMonth);
-    }
-  );
+
+    if (worker.station_history?.length >= 124)
+      worker.station_history = worker.station_history.slice(forMonth);
+  });
 
   if (stationsKeys.length) stationsStore.enable_extra = true;
   if (!stationsKeys.length && stationsStore.enable_extra) stationsStore.enable_extra = false;
 
   return {
-    snp_workers:cloneDeep(toRaw(workersStore.workers)),
-    snp_assignments: cloneDeep(toRaw(stationsStore.assignments)),
+    snp_workers: clone(toRaw(workersStore.workers).toSorted((a, b) => a.name.localeCompare(b.name))),
+    snp_assignments: clone(toRaw(stationsStore.assignments)),
   };
 };
 

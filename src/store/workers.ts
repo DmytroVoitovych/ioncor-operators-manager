@@ -3,6 +3,8 @@ import { Operator, StationNumber, User, UserCreationData } from "~/maintypes/typ
 import { supabase } from "~/utils/supabase";
 import { useStationsStore } from "./stations";
 import { removePersonFromStation } from "~/components/stations/utils/stationAssignmentService";
+import { shallowRef } from "vue";
+import { dayjs } from "element-plus";
 
 interface State {
   workers: Operator[];
@@ -19,14 +21,33 @@ export const useWorkersStore = defineStore("workersStore", {
     globalKey: "",
   }),
 
-  
+  getters: {
+    getWorkersCache: (state) => {
+      if (state.globalKey) {
+        console.log(state.globalKey);
+        const stationsStore = useStationsStore();
+        return stationsStore?.snapshot?.[state.globalKey]?.snp_workers || state.workers;
+      }
+      return state.workers;
+    },
+  },
   actions: {
+    changeWorkersCache(workers: Operator[]) {
+      if (!workers?.length) return;
+      const stationsStore = useStationsStore();
+      if (stationsStore.snapshot?.[this.globalKey]) {
+        stationsStore.snapshot[this.globalKey].snp_workers = workers;
+        return;
+      }
+      this.workers = workers;
+    },
     setGlobalKey(key: string) {
       this.globalKey = key;
     },
-    replaceWorkers(snapShot: Operator[]) {
-      if (!snapShot?.length) return;
-      this.workers = snapShot;
+    replaceWorkers(key: string) {
+      const stationsStore = useStationsStore();
+      if (!stationsStore.getSnapshotMap.get(key)?.snp_workers) return;
+      this.workers = stationsStore.snapshot[key].snp_workers;
     },
     getWorkersById(id: string) {
       return this.workers.find((worker) => worker.id === id);
@@ -63,8 +84,11 @@ export const useWorkersStore = defineStore("workersStore", {
       worker.visited_stations ??= [];
       worker.visited_stations.push(station);
 
-      if (worker.known_stations.every((e) => worker.visited_stations.includes(e))) {
-        worker.visited_stations = [worker.visited_stations.at(-1) as StationNumber];
+      if (
+        worker.known_stations.every((e) => worker.visited_stations.includes(e)) ||
+        worker.visited_stations.length > 124
+      ) {
+        worker.visited_stations = [worker.station_history?.at(-1)?.station as StationNumber];
       }
     },
 
@@ -72,14 +96,15 @@ export const useWorkersStore = defineStore("workersStore", {
       const workerIndex = this.workers.findIndex((e) => e.id === id);
       const worker = this.workers[workerIndex];
 
-      this.handleWorkerStationVisiting(worker, station);
-
       worker.station_history ??= [];
+
       worker.station_history.push({ station, date });
+      if (station !== ("unassigned" as StationNumber))
+        this.handleWorkerStationVisiting(worker, station);
     },
 
     getWorkers() {
-     this.error = null;
+      this.error = null;
 
       return Promise.resolve(supabase.from("operatorslist").select("*"))
         .then(({ data, error }) => {
@@ -101,7 +126,7 @@ export const useWorkersStore = defineStore("workersStore", {
       Promise.resolve(supabase.from("operatorslist").delete().eq("id", id))
         .then(({ error }) => {
           if (!error) {
-          if (stStore.getSnapshotMap.has(this.globalKey)) {
+            if (stStore.getSnapshotMap.has(this.globalKey)) {
               stStore.deleteWorkerFromSnapshot(glKey, id);
               stStore.saveNewSnapshot();
               return;
@@ -114,7 +139,6 @@ export const useWorkersStore = defineStore("workersStore", {
               );
             }
             this.workers.splice(workerIndex, 1);
-
           } else {
             this.error = error.message;
           }
@@ -137,9 +161,7 @@ export const useWorkersStore = defineStore("workersStore", {
         .then(({ error }) => {
           if (!error) {
             if (stStore.getSnapshotMap.has(this.globalKey)) {
-              filteredArrForDelete.forEach(({ id }) =>
-                stStore.deleteWorkerFromSnapshot(glKey, id),
-              );
+              filteredArrForDelete.forEach(({ id }) => stStore.deleteWorkerFromSnapshot(glKey, id));
               stStore.saveNewSnapshot();
               return;
             }
@@ -176,10 +198,10 @@ export const useWorkersStore = defineStore("workersStore", {
           if (!error) {
             console.log("Worker added:", data);
 
-            this.workers = [...this.workers, ...data];
+            this.workers = [...this.getWorkersCache, ...data];
 
-            const operator:Operator = data[0];
-            stStore.addWorkerInSnapshot(glKey,operator);
+            const operator: Operator = data[0];
+            stStore.addWorkerInSnapshot(glKey, operator);
             stStore.saveNewSnapshot();
           } else {
             this.error = error.message;
@@ -207,6 +229,27 @@ export const useWorkersStore = defineStore("workersStore", {
             (this.workers[indexWorker][key] as Operator[typeof key]) = field[key];
         });
 
+      const updatePersonInSnapshot = () => {
+        const stStore = useStationsStore();
+        const glDate = this.globalKey.split("_")[0];
+        if (stStore.getSnapshotMap.has(this.globalKey)) {
+          for (const [key] of stStore.getSnapshotMap) {
+            const keyDate = dayjs(key.split("_")[0]);
+            if (keyDate.isBefore(glDate, "day")) continue;
+            const snapData = stStore.snapshot[key];
+            const futureWorker: Operator | undefined = snapData?.snp_workers?.find(
+              (e) => e.id === id,
+            );
+            if (futureWorker) {
+              (Object.keys(field) as (keyof Operator)[]).forEach((key) => {
+                if (key !== "current_station")
+                  (futureWorker[key] as Operator[typeof key]) = field[key];
+              });
+            }
+          }
+        }
+      };
+
       const updateStationList = () => {
         const store = useStationsStore();
         const current = field?.current_station;
@@ -218,19 +261,30 @@ export const useWorkersStore = defineStore("workersStore", {
         if (isStatusChanged && isAssigned) {
           this.unassignOperator(this.workers[indexWorker]);
           removePersonFromStation(id, currentSt);
+          store.removeHistory(this.workers[indexWorker]);
+          store.reactOnStatusChange(this.globalKey, id, status);
         }
-        if (current) {
-          const checkStation = store.assignments[current];
-          const choseSide =
-            checkStation?.left && checkStation?.right
-              ? "left"
-              : !checkStation?.left && !checkStation?.right
-                ? "right"
-                : !checkStation?.left && checkStation?.right
-                  ? "left"
-                  : "right";
 
-          store.outerAssignByTable(current, choseSide, id);
+        if (current) {
+          const choseSide = () => {
+            if (store.stations[current] && store.stations[current] === 2) {
+              return store.assignments[current]?.left ? "right" : "left";
+            }
+
+            return "right";
+          };
+          const assignmentStationType =
+            current !== ("unassigned" as StationNumber) ? current : ("unassigned" as StationNumber);
+
+          if (status === "available") {
+            store.reactOnStatusChange(this.globalKey, id, status);
+            this.setWorkerHistory(
+              id,
+              assignmentStationType,
+              dayjs(this.globalKey.split("_")[0]).toDate(),
+            );
+          }
+          store.outerAssignByTable(assignmentStationType, choseSide(), id);
         }
       };
 
@@ -241,6 +295,9 @@ export const useWorkersStore = defineStore("workersStore", {
             if (indexWorker !== -1) {
               updatedWorkerFields();
               updateStationList();
+              updatePersonInSnapshot();
+              const store = useStationsStore();
+              if (store.getSnapshotMap.has(this.globalKey)) store.saveNewSnapshot();
             }
           } else {
             this.error = error.message;
@@ -253,5 +310,7 @@ export const useWorkersStore = defineStore("workersStore", {
         });
     },
   },
-  persist: true,
+  persist: {
+    pick: ["workers"],
+  },
 });

@@ -23,9 +23,9 @@ export const install: UserModule = async ({ app }) => {
         const { useStationsStore } = await import("~/store/stations");
 
         await Promise.allSettled([
-          useWorkersStore().getWorkers(),
-          useStationsStore().getStationsFromDB(),
-          useStationsStore().getFreshSnapShots(useWorkersStore().globalKey)
+        await  useWorkersStore().getWorkers(),
+        await useStationsStore().getStationsFromDB(),
+        useStationsStore().getFreshSnapShots(useWorkersStore().globalKey)
         ]);
       } catch (dataError) {
         console.error('Data loading error:', dataError);

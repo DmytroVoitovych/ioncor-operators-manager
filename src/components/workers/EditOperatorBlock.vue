@@ -137,7 +137,7 @@ const handaleLoading = (loadingState: boolean) => {
 };
 
 const updateOperator = () => {
-  const updatedFields = {};
+  const updatedFields = {} as Partial<Operator>;
   if (!isChanged.value) return;
 
   for (const key in formOperatorUpdate.value) {
@@ -146,6 +146,9 @@ const updateOperator = () => {
     if (formOperatorUpdate.value[typedKey] !== operator.value[typedKey]) {
       // @ts-expect-error: typedKey may not match all keys of updatedFields, but is safe here
       updatedFields[typedKey] = formOperatorUpdate.value[typedKey];
+      if(typedKey === 'status' && formOperatorUpdate.value[typedKey] !== 'available') {
+        updatedFields['current_station'] = 'unassigned' as StationNumber;
+      }
     }
   }
 
