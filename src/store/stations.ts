@@ -7,7 +7,6 @@ import { findWorkerById, isExtraAssignment } from "~/components/stations/utils/w
 import { dayjs } from "element-plus";
 import { supabase } from "~/utils/supabase";
 import { FIRST_LIST } from "~/components/stations/constants";
-import { shallowRef, toRaw, toRef } from "vue";
 import { clone } from "~/components/stations/utils/scheduleGenerator";
 
 type NavigationItem = {
@@ -39,12 +38,10 @@ export const useStationsStore = defineStore("stations", {
   getters: {
     getStations: (state) => {
       const { addStation, removeStation, changeRequiredPeople, ...rest } = state.stations;
-      console.log(rest, "getStations rest");
       return rest;
     },
+   
     getAssignment: (state) => (stationId: string, slotKey: SideKey) => {
-      /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      // const workersStore = useWorkersStore();
       return state?.assignments?.[stationId]?.[slotKey] || (state.enable_extra ? "Extra" : "");
     },
 

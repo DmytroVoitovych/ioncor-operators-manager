@@ -1,5 +1,6 @@
 <template>
   <section class="scheduleGeneration">
+    <ScheduleAbsentInfo :operatorsAmount="availableWorkers.length" :absentAmount :stationsAmount />
     <div class="scheduleHeadlineBlock">
       <h3>Schedule Generation</h3>
       <slot></slot>
@@ -65,9 +66,12 @@ const availableWorkers = computed(() =>
 
 const stations = stationsStore.getStations;
 
+const stationsAmount = computed(()=>Object.values(stations).reduce((acc, st) => acc + st, 0));
+
 const absentAmount = computed(
-  () => Object.values(stations).reduce((acc, st) => acc + st, 0) - availableWorkers.value.length,
+  () => stationsAmount.value - availableWorkers.value.length,
 );
+
 
 const timeRotation = ref(2);
 const period = ref(1);
@@ -167,7 +171,6 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
 watch(
   absentAmount,
   (n) => {
-
     if (stationsStore.stations["200"] === 1 && !n)
       stationsStore.stations.changeRequiredPeople("200", 2);
     if (n) stationsStore.stations.changeRequiredPeople("200", 1);

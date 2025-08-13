@@ -27,7 +27,7 @@ body {
   flex-grow: 1;
   display: grid;
   grid-template-rows: 0fr 1fr 0fr;
-  width: fit-content;
+  
 
   &:has(> .baseAuthContainer) {
     align-content: center;

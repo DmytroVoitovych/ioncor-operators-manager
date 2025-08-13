@@ -3,7 +3,6 @@ import { Operator, StationNumber, User, UserCreationData } from "~/maintypes/typ
 import { supabase } from "~/utils/supabase";
 import { useStationsStore } from "./stations";
 import { removePersonFromStation } from "~/components/stations/utils/stationAssignmentService";
-import { shallowRef } from "vue";
 import { dayjs } from "element-plus";
 
 interface State {
@@ -276,11 +275,11 @@ export const useWorkersStore = defineStore("workersStore", {
 
           if (status === "available") {
             store.reactOnStatusChange(this.globalKey, id, status);
-            this.setWorkerHistory(
-              id,
-              assignmentStationType,
-              dayjs(this.globalKey.split("_")[0]).toDate(),
-            );
+            // this.setWorkerHistory(
+            //   id,
+            //   assignmentStationType,
+            //   dayjs(this.globalKey.split("_")[0]).toDate(),
+            // );
           }
           store.outerAssignByTable(assignmentStationType, choseSide(), id);
         }

@@ -79,7 +79,6 @@ const getStationSelect = (stationId: StationId, slotKey: SideKey) => {
   return computed({
     get: () => store.getAssignment(stationId, slotKey),
     set: (personId: string) => {
-      console.log(personId, 'test');
       if (personId) store.executeWorkerAssignment(stationId, slotKey, personId, now.value)
     },
   });

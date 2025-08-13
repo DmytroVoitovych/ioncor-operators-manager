@@ -74,6 +74,7 @@ declare module 'vue' {
     ReflectionReport: typeof import('./components/reports/ReflectionReport.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScheduleAbsentInfo: typeof import('./components/stations/ScheduleAbsentInfo.vue')['default']
     ScheduleGeneration: typeof import('./components/stations/ScheduleGeneration.vue')['default']
     SettingsButton: typeof import('./components/settings/SettingsButton.vue')['default']
     SleepReport: typeof import('./components/reports/SleepReport.vue')['default']
