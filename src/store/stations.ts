@@ -8,6 +8,7 @@ import { dayjs } from "element-plus";
 import { supabase } from "~/utils/supabase";
 import { FIRST_LIST } from "~/components/stations/constants";
 import { clone } from "~/components/stations/utils/scheduleGenerator";
+import { saveDataNotification } from "./notifications";
 
 type NavigationItem = {
   left?: string | SideKey;
@@ -40,7 +41,7 @@ export const useStationsStore = defineStore("stations", {
       const { addStation, removeStation, changeRequiredPeople, ...rest } = state.stations;
       return rest;
     },
-   
+
     getAssignment: (state) => (stationId: string, slotKey: SideKey) => {
       return state?.assignments?.[stationId]?.[slotKey] || (state.enable_extra ? "Extra" : "");
     },
@@ -431,8 +432,9 @@ export const useStationsStore = defineStore("stations", {
           partial_snapshot: this.snapshot,
         }),
       )
-        .catch((err) => console.log(err))
-        .finally(() => console.log("ssss"));
+        .then(() => (this.isApproved = true))
+        .then(saveDataNotification)
+        .catch((err) => console.log(err));
     },
   },
   persist: {

@@ -4,6 +4,13 @@ import { supabase } from "~/utils/supabase";
 import { useStationsStore } from "./stations";
 import { removePersonFromStation } from "~/components/stations/utils/stationAssignmentService";
 import { dayjs } from "element-plus";
+import {
+  addNotification,
+  massiveDeleteNotification,
+  singleDeleteNotification,
+  updateNotification,
+} from "./notifications";
+import { toRaw } from "vue";
 
 interface State {
   workers: Operator[];
@@ -110,8 +117,7 @@ export const useWorkersStore = defineStore("workersStore", {
           if (!error) this.workers = data;
           else this.error = error.message;
         })
-        .catch((err) => console.log(err))
-        .finally();
+        .catch((err) => console.log(err));
     },
     deleteWorker(id: string, loadingHandler: (loadingState: boolean) => void) {
       loadingHandler(true);
@@ -138,9 +144,10 @@ export const useWorkersStore = defineStore("workersStore", {
             }
             this.workers.splice(workerIndex, 1);
           } else {
-            this.error = error.message;
+            throw new Error(error.message);
           }
         })
+        .then(() => singleDeleteNotification(worker?.name || "uknown"))
         .catch((err) => console.log(err))
         .finally(() => loadingHandler(false));
     },
@@ -173,9 +180,10 @@ export const useWorkersStore = defineStore("workersStore", {
             });
             this.workers = filteredArrForReplace;
           } else {
-            this.error = error.message;
+            throw new Error(error.message);
           }
         })
+        .then(() => massiveDeleteNotification(filteredArrForDelete))
         .catch((err) => console.log(err))
         .finally(() => loadingHandler(false));
     },
@@ -194,16 +202,17 @@ export const useWorkersStore = defineStore("workersStore", {
         .then(({ data, error }) => {
           if (!error) {
             console.log("Worker added:", data);
-
-            this.workers = [...this.getWorkersCache, ...data];
+            this.workers = [...toRaw(this.workers), ...data];
 
             const operator: Operator = data[0];
             stStore.addWorkerInSnapshot(glKey, operator);
             if (stStore.getSnapshotMap.has(this.globalKey)) stStore.saveNewSnapshot();
+            return operator.name;
           } else {
-            this.error = error.message;
+            throw new Error(error.message);
           }
         })
+        .then(addNotification)
         .catch((err) => console.log(err))
         .finally(() => {
           loadingHandler(false);
@@ -288,7 +297,7 @@ export const useWorkersStore = defineStore("workersStore", {
       Promise.resolve(supabase.from("operatorslist").update(field).eq("id", id).select())
         .then(({ data, error }) => {
           if (!error) {
-            console.log("Worker updated:", data);
+            const operator: Operator = data[0];
             if (indexWorker !== -1) {
               updatedWorkerFields();
               updateStationList();
@@ -296,10 +305,12 @@ export const useWorkersStore = defineStore("workersStore", {
               const store = useStationsStore();
               if (store.getSnapshotMap.has(this.globalKey)) store.saveNewSnapshot();
             }
+            return operator.name;
           } else {
-            this.error = error.message;
+            throw new Error(error.message);
           }
         })
+        .then(updateNotification)
         .catch((err) => console.log(err))
         .finally(() => {
           loadingHandler(false);
