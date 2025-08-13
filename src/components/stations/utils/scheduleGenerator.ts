@@ -194,8 +194,8 @@ const generateSchedule = (
   if (!stationsKeys.length && stationsStore.enable_extra) stationsStore.enable_extra = false;
 
   return {
-    snp_workers: clone(toRaw(workersStore.workers).toSorted((a, b) => a.name.localeCompare(b.name))),
-    snp_assignments: clone(toRaw(stationsStore.assignments)),
+    snp_workers: clone(workersStore.workers).toSorted((a, b) => a.name.localeCompare(b.name)),
+    snp_assignments: clone(stationsStore.assignments),
   };
 };
 

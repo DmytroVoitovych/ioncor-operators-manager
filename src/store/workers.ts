@@ -129,7 +129,6 @@ export const useWorkersStore = defineStore("workersStore", {
             if (stStore.getSnapshotMap.has(this.globalKey)) {
               stStore.deleteWorkerFromSnapshot(glKey, id);
               stStore.saveNewSnapshot();
-              return;
             }
             if (worker && worker.current_station !== ("unassigned" as StationNumber)) {
               stStore.unassignPerson(
@@ -163,7 +162,6 @@ export const useWorkersStore = defineStore("workersStore", {
             if (stStore.getSnapshotMap.has(this.globalKey)) {
               filteredArrForDelete.forEach(({ id }) => stStore.deleteWorkerFromSnapshot(glKey, id));
               stStore.saveNewSnapshot();
-              return;
             }
 
             filteredArrForDelete.forEach(({ current_station, id }) => {
@@ -202,7 +200,7 @@ export const useWorkersStore = defineStore("workersStore", {
 
             const operator: Operator = data[0];
             stStore.addWorkerInSnapshot(glKey, operator);
-            stStore.saveNewSnapshot();
+            if (stStore.getSnapshotMap.has(this.globalKey)) stStore.saveNewSnapshot();
           } else {
             this.error = error.message;
           }

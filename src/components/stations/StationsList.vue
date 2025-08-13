@@ -130,6 +130,7 @@ const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: stri
   if (store.getSnapshotMap.has(operatorStore.globalKey)) {
 
   if (personId !== 'Extra') store.executeWorkerAssignment('unassigned' as StationId, slotKey, personId, now.value);
+  else store.enable_extra = false;
 
   }
   else store.unassignPerson(stationId, slotKey, personId);

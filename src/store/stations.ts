@@ -155,7 +155,7 @@ export const useStationsStore = defineStore("stations", {
       workersStore.unassignOperator(worker);
     },
 
-    assignPerson(stationId: StationId | 'unassigned', slotKey: SideKey, personId: string) {
+    assignPerson(stationId: StationId | "unassigned", slotKey: SideKey, personId: string) {
       if (stationId !== "unassigned") this.assignments[stationId] ??= this.getInitialState(slotKey);
 
       const workersStore = useWorkersStore();
@@ -358,7 +358,7 @@ export const useStationsStore = defineStore("stations", {
       this.updateStationHistory(date, personId, stationId);
     },
 
-   executeWorkerAssignment(
+    executeWorkerAssignment(
       stationId: StationId,
       slotKey: SideKey,
       personId: string,
@@ -366,7 +366,7 @@ export const useStationsStore = defineStore("stations", {
     ) {
       const currentAssignedId = this.getAssignment(stationId, slotKey);
       const shouldSwap = currentAssignedId && !isExtraAssignment(currentAssignedId);
-      
+
       if (shouldSwap) this.performWorkerSwap(currentAssignedId, personId, stationId);
       if (!shouldSwap) this.prepareDesiredWorker(personId, stationId, date);
       this.assignPerson(stationId, slotKey, personId);
