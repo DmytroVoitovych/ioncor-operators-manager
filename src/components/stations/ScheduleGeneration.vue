@@ -185,16 +185,21 @@ watch(
   justify-content: space-between;
   margin-bottom: 8px;
   align-items: center;
+  @include fluid-desktop-font(16px, 19px);
 }
 
+
 .el-form {
+  --el-form-label-font-size:#{fluid-font(16px, 19px, 1440px, 2560px)};
   display: flex;
   justify-content: space-evenly;
+
 }
 
 .el-form-item {
   :deep(.el-form-item__content) {
     flex-direction: column;
+
   }
 }
 
@@ -203,11 +208,14 @@ watch(
   align-self: start;
 
   & .el-radio {
+    --el-radio-font-size:#{fluid-font(14px, 17px, 1440px, 2560px)};
     align-self: start;
+
   }
 }
 
 .castomDateBlock {
+  @include fluid-desktop-font(14px, 17px);
   span {
     display: block;
   }
@@ -230,5 +238,23 @@ watch(
 
 .el-button.is-disabled {
   --el-button-text-color: var(--neutral-900);
+}
+
+.el-button{
+@include fluid-desktop-font(14px, 17px);
+}
+
+:deep(.el-date-editor){
+@include mq(mobile-large){
+translate: -40px 0;
+}
+
+@include mq(mobile){
+translate: -90px 0;
+}
+}
+
+:deep(.el-date-editor--daterange){
+--el-date-editor-width:220px;
 }
 </style>

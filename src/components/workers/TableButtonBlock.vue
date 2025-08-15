@@ -60,4 +60,8 @@ defineProps<{
 }>();
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+:deep(.el-button){
+@include fluid-desktop-font(14px, 17px);
+}
+</style>

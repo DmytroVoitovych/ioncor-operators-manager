@@ -10,3 +10,9 @@ const {captureAndDownload,isCapturing} = useScreenshot();
 defineExpose({captureAndDownload});
 
 </script>
+
+<style lang="scss" scoped>
+.el-button{
+@include fluid-desktop-font(14px, 17px);
+}
+</style>

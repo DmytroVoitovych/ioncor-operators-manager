@@ -1,25 +1,16 @@
 <template>
-  <el-table
-    :default-sort="{ prop: 'name', order: 'ascending' }"
-    :row-class-name="tableRowClassName"
-    :data="store.workers"
-    style="width: 100%"
-    @selection-change="extractIds"
-    show-overflow-tooltip
-  >
+  <el-table :default-sort="{ prop: 'name', order: 'ascending' }" :row-class-name="tableRowClassName"
+    :data="store.workers" style="width: 100%" @selection-change="extractIds" show-overflow-tooltip>
     <el-table-column type="expand">
       <template #default="props">
         <ul>
           <li>Full Name: <span class="text-preset-8-mono">{{ props.row.name }} {{ props.row.surname }}</span></li>
-          <li >Trained Stations: <span class="text-preset-8-mono">{{ props.row.known_stations.join(", ") }}</span></li>
+          <li>Trained Stations: <span class="text-preset-8-mono">{{ props.row.known_stations.join(", ") }}</span></li>
           <li>
             Station History:
-            <el-table class="text-preset-8-mono" border :data="props.row.station_history?.slice(-30) || []" style="padding: 0px">
-              <el-table-column
-                prop="date"
-                label="Date"
-                :formatter="(row, coll, val) => transformDate(val)"
-              />
+            <el-table class="text-preset-8-mono" border :data="props.row.station_history?.slice(-30) || []"
+              style="padding: 0px">
+              <el-table-column prop="date" label="Date" :formatter="(row, coll, val) => transformDate(val)" />
               <el-table-column prop="station" label="Station" />
             </el-table>
           </li>
@@ -29,42 +20,25 @@
     <el-table-column type="selection"></el-table-column>
     <el-table-column prop="name" label="Name" />
     <el-table-column prop="surname" label="Surname" />
-    <el-table-column
-      prop="status"
-      label="Status"
-      :filters="[
-        { text: 'Available', value: 'available' },
-        { text: 'Sick Leave', value: 'sick-leave' },
-        { text: 'Vacation', value: 'vacation' },
-        { text: 'Day Off', value: 'day-off' },
-        { text: 'Unknown', value: 'unknown' },
-      ]"
-      :filter-method="filterTag"
-      filter-placement="bottom-end"
-    />
+    <el-table-column prop="status" label="Status" :filters="[
+      { text: 'Available', value: 'available' },
+      { text: 'Sick Leave', value: 'sick-leave' },
+      { text: 'Vacation', value: 'vacation' },
+      { text: 'Day Off', value: 'day-off' },
+      { text: 'Unknown', value: 'unknown' },
+    ]" :filter-method="filterTag" filter-placement="bottom-end" />
     />
     <el-table-column prop="current_station" label="Current Station" class-name="text-preset-8-mono" />
     <el-table-column fixed="right" label="Operations" min-width="120">
       <template #default="scope">
         <div class="operationBlock">
           <EditOperatorBlock :operatorId="scope.row.id" />
-          <el-popconfirm
-            confirm-button-text="Yes"
-            cancel-button-text="No"
-            :icon="InfoFilled"
-            icon-color="var(--blue-600)"
-            title="Are you sure to delete this?"
-            @confirm="
+          <el-popconfirm confirm-button-text="Yes" cancel-button-text="No" :icon="InfoFilled"
+            icon-color="var(--blue-600)" title="Are you sure to delete this?" @confirm="
               deleteWorker(scope.row.id, (loading) => setDeleteLoading(scope.row.id, loading))
-            "
-          >
+              ">
             <template #reference>
-              <el-button
-                type="danger"
-                size="small"
-                :loading="deleteLoadingState[scope.row.id] || false"
-                plain
-              >
+              <el-button type="danger" size="small" :loading="deleteLoadingState[scope.row.id] || false" plain>
                 delete
               </el-button>
             </template>
@@ -108,7 +82,7 @@ const filterTag = (value: string, row: Operator) => {
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .el-table {
   padding: 8px;
 
@@ -125,6 +99,7 @@ const filterTag = (value: string, row: Operator) => {
 .el-table :deep(.cell) {
   display: flex;
   line-height: 22px;
+  @include fluid-desktop-font(14px, 17px);
 
   &.el-tooltip {
     display: block;
@@ -134,6 +109,12 @@ const filterTag = (value: string, row: Operator) => {
 .operationBlock {
   display: flex;
   gap: 8px;
+
+  @include mq(tablet){
+  gap: unset;
+  justify-content: center;
+  }
+
 }
 
 .tableButtonBlock {
@@ -145,5 +126,9 @@ const filterTag = (value: string, row: Operator) => {
   & .el-button {
     margin-left: 0;
   }
+}
+
+.el-button--small{
+@include fluid-desktop-font(12px, 15px);
 }
 </style>

@@ -1,12 +1,12 @@
 <template>
-  <el-button type="primary" plain size="small" @click="dialogTableVisible = !dialogTableVisible"
+  <el-button type="primary"  plain size="small" @click="dialogTableVisible = !dialogTableVisible"
     >Edit</el-button
   >
   <el-dialog
     append-to-body
     v-model="dialogTableVisible"
     title="Edit Operator"
-    width="800"
+    :width="isLargeTablet?'100%':'800'"
     :close-on-click-modal="false"
   >
     <el-form :model="formOperatorUpdate" label-width="auto" label-position="left">
@@ -74,10 +74,13 @@ import { Operator, StationNumber,  Status } from "~/maintypes/types";
 import { computed,  ref, watch } from "vue";
 import { CheckboxValueType } from "element-plus";
 import { useStationsStore } from "~/store/stations";
+import { useMediaQuery } from "@vueuse/core";
 
 const props = defineProps<{
   operatorId: string;
 }>();
+
+const isLargeTablet = useMediaQuery('(max-width: 834px)');
 
 const store = useWorkersStore();
 const stationStore = useStationsStore();
@@ -205,3 +208,10 @@ const handleCheckAll = (val: CheckboxValueType) => {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.el-button--small{
+@include fluid-desktop-font(12px, 15px);
+}
+
+</style>

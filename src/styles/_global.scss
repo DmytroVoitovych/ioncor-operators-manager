@@ -27,6 +27,10 @@ body {
   flex-grow: 1;
   display: grid;
   grid-template-rows: 0fr 1fr 0fr;
+
+  @include mq(tablet-small){
+display: block;
+}
   
 
   &:has(> .baseAuthContainer) {
@@ -74,7 +78,7 @@ body {
     max-width: 600px;
     background-image: var(--light-gradient);
 
-    @include mq(medium) {
+    @include mq(laptop-large) {
       --el-dialog-padding-primary: 48px 40px;
     }
 

@@ -1,15 +1,41 @@
 @use "sass:map";
+@use "sass:string";
 
 $breakpoints: (
-  small: 480px,
-  medium: 768px,
-  large: 1440px,
+  desktop-large: 2560px, // QHD/4K and ultra-wide monitors
+  desktop: 1920px,       // Full HD - most common desktop resolution
+  laptop-large: 1440px,  // MacBook Pro 15", high-res laptops
+  laptop: 1280px,        // Standard HD laptops
+  laptop-small: 1024px,  // Small laptops, tablets in landscape
+  tablet-large: 834px,   // iPad Pro 11" (portrait)
+  tablet: 768px,         // iPad Mini / Air (portrait)
+  tablet-small: 600px,   // Small tablets, foldable devices
+  mobile-large: 415px,   // iPhone Max/Plus, large Android phones
+  mobile: 390px,         // iPhone 12/13/14, some Android devices
+  mobile-small: 360px    // Compact smartphones
 );
 
 @mixin mq($key) {
   $size: map.get($breakpoints, $key);
 
-  @media (min-width: $size) {
+  @media (max-width: $size) {
     @content;
+  }
+}
+
+
+// Function: generates clamp() value for fluid typography
+@function fluid-font($min-size, $max-size, $min-width: 320px, $max-width: 1200px) {
+  $slope: calc(($max-size - $min-size) / ($max-width - $min-width));
+  $intersection: calc($min-size - $slope * $min-width);
+  
+  @return clamp(#{$min-size}, #{$intersection} + #{$slope} * 100vw, #{$max-size});
+}
+
+
+// Mixin: applies font-size for desktop-first max-width approach
+@mixin fluid-desktop-font($min-size, $max-size, $min-width: 1440px, $max-width: 2560px) {
+  @media (max-width: #{$max-width})  {
+    font-size: fluid-font($min-size, $max-size, $min-width, $max-width);
   }
 }

@@ -26,3 +26,10 @@ const absentColor  = computed(()=>{
 });
 
 </script>
+
+<style scoped lang="scss">
+.el-text{
+ @include fluid-desktop-font(14px, 17px);
+}
+
+</style>

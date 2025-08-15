@@ -6,7 +6,7 @@
         <h1 class="text-preset-5 sectionHeadline">Stations List</h1>
         <StationsList />
       </section>
-      <el-aside width="55%">
+      <el-aside :width="isSmallScreen?isSmallTablet?'100%':'80%':'55%'">
         <h1 class="text-preset-5 sectionHeadline">Operators List</h1>
         <WorkersList />
       </el-aside>
@@ -14,19 +14,39 @@
   </div>
 </template>
 <script lang="ts" setup>
+import { useMediaQuery } from '@vueuse/core';
+
+
+const isSmallScreen = useMediaQuery('(max-width: 1024px)');
+const isSmallTablet = useMediaQuery('(max-width: 600px)');
+
 
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@include mq(tablet-small){
+.el-aside{
+max-width: 100vw;
+}
+}
+
 .el-container {
   height: 100%;
   padding: 0 20px;
   gap: 20px;
+
+  @include mq(laptop-small){
+   flex-direction: column-reverse;
+   align-items: center;
+  }
 }
 
 .stationsSection {
   flex-grow: 1;
+  @include mq(laptop-small){
+   width: 100%;
+  }
 }
 
 .sectionHeadline{

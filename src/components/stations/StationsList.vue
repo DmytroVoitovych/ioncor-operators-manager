@@ -128,8 +128,8 @@ const getSpecialMark = (person: Operator, currentPersonId: string | 'Extra' | ''
 const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: string) => {
   if (store.getSnapshotMap.has(operatorStore.globalKey)) {
 
-  if (personId !== 'Extra') store.executeWorkerAssignment('unassigned' as StationId, slotKey, personId, now.value);
-  else store.enable_extra = false;
+    if (personId !== 'Extra') store.executeWorkerAssignment('unassigned' as StationId, slotKey, personId, now.value);
+    else store.enable_extra = false;
 
   }
   else store.unassignPerson(stationId, slotKey, personId);
@@ -167,13 +167,23 @@ const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: stri
   border: 1px solid var(--blue-100);
   border-radius: 8px;
 
+  @include mq(tablet-small) {
+    grid-template-columns: 1fr;
+  }
+
   .stationInfo {
     grid-column: 2;
     text-align: center;
 
+    @include mq(tablet-small) {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
     &>.stationName {
       font-weight: 600;
       color: var(--neutral-900);
+      @include fluid-desktop-font(16px, 19px);
     }
   }
 
@@ -184,6 +194,10 @@ const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: stri
 
   &:has(.stationButton:first-child) {
     grid-template-columns: 1fr 1fr 1fr;
+
+    @include mq(tablet-small) {
+    grid-template-columns: 1fr;
+  }
   }
 
   &:has(.assigned) {
@@ -218,10 +232,7 @@ const clearSelectValue = (stationId: StationId, slotKey: SideKey, personId: stri
     gap: 16px;
     box-shadow: none;
     border: 2px dashed var(--el-border-color);
+    @include fluid-desktop-font(14px, 17px);
   }
 }
-
-/* .assigned{
-border-color: var(--el-color-success-light-5);
-} */
 </style>
