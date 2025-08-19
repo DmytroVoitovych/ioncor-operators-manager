@@ -29,7 +29,7 @@
     ]" :filter-method="filterTag" filter-placement="bottom-end" />
     />
     <el-table-column prop="current_station" label="Current Station" class-name="text-preset-8-mono" />
-    <el-table-column fixed="right" label="Operations" min-width="120">
+    <el-table-column fixed="right" label="Operations" :min-width="largeDesktop?'65':'120'">
       <template #default="scope">
         <div class="operationBlock">
           <EditOperatorBlock :operatorId="scope.row.id" />
@@ -56,6 +56,9 @@ import dayjs from "dayjs";
 import { useWorkersStore } from "~/store/workers";
 import { Operator } from "~/maintypes/types";
 import { InfoFilled } from "@element-plus/icons-vue";
+import { useMediaQuery } from "@vueuse/core";
+
+const largeDesktop = useMediaQuery('(min-width: 1920px)');
 
 const store = useWorkersStore();
 
@@ -89,6 +92,11 @@ const filterTag = (value: string, row: Operator) => {
   & :deep(.el-table__body-wrapper) {
     max-height: 60vh;
     overflow-y: auto;
+  }
+
+  & :deep(.el-table__empty-block){
+  min-height: 30vh;
+  
   }
 }
 

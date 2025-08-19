@@ -31,6 +31,12 @@ const singleDeleteNotification = (name:string)=> ElNotification({
     type: 'success',
   });
 
+   const loginError = (title:string = 'uknown',message:string='no data')=>ElNotification({
+    title,
+    message,
+    type: 'error',
+  });
 
 
-  export {singleDeleteNotification,massiveDeleteNotification,addNotification,updateNotification,saveDataNotification};
+
+  export {singleDeleteNotification,massiveDeleteNotification,addNotification,updateNotification,saveDataNotification,loginError};

@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, ref, toRaw, watch } from "vue";
+import { computed, markRaw, onBeforeUnmount, ref, toRaw, watch } from "vue";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { generateSchedule } from "./utils/scheduleGenerator";
@@ -66,7 +66,7 @@ const availableWorkers = computed(() =>
 
 const stations = stationsStore.getStations;
 
-const stationsAmount = computed(()=>Object.values(stations).reduce((acc, st) => acc + st, 0));
+const stationsAmount = computed(() => Object.values(stations).reduce((acc, st) => acc + st, 0));
 
 const absentAmount = computed(
   () => stationsAmount.value - availableWorkers.value.length,
@@ -171,12 +171,19 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
 watch(
   absentAmount,
   (n) => {
-    if (stationsStore.stations["200"] === 1 && !n)
+
+    if (stationsStore.stations["200"] === 1 && (!n))
       stationsStore.stations.changeRequiredPeople("200", 2);
     if (n) stationsStore.stations.changeRequiredPeople("200", 1);
   },
   { immediate: true }
 );
+
+onBeforeUnmount(() => {
+  if (stationsStore.stations["200"] === 1)
+    stationsStore.stations.changeRequiredPeople("200", 2);
+});
+
 </script>
 
 <style scoped lang="scss">
@@ -216,6 +223,7 @@ watch(
 
 .castomDateBlock {
   @include fluid-desktop-font(14px, 17px);
+
   span {
     display: block;
   }
@@ -240,21 +248,24 @@ watch(
   --el-button-text-color: var(--neutral-900);
 }
 
-.el-button{
-@include fluid-desktop-font(14px, 17px);
+.el-button {
+  @include fluid-desktop-font(14px, 17px);
 }
 
-:deep(.el-date-editor){
-@include mq(mobile-large){
-translate: -40px 0;
+:deep(.el-date-editor) {
+  @include mq(mobile-large) {
+    translate: -40px 0;
+  }
+
+  @include mq(mobile) {
+    translate: -90px 0;
+  }
 }
 
-@include mq(mobile){
-translate: -90px 0;
-}
-}
+:deep(.el-date-editor--daterange) {
+  @include mq(tablet-small) {
+    --el-date-editor-width: 220px;
+  }
 
-:deep(.el-date-editor--daterange){
---el-date-editor-width:220px;
 }
 </style>

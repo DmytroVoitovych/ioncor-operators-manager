@@ -9,6 +9,7 @@ import { supabase } from "~/utils/supabase";
 import { FIRST_LIST } from "~/components/stations/constants";
 import { clone } from "~/components/stations/utils/scheduleGenerator";
 import { saveDataNotification } from "./notifications";
+import { useShiftAuth } from "~/composables/useAuth";
 
 type NavigationItem = {
   left?: string | SideKey;
@@ -393,8 +394,11 @@ export const useStationsStore = defineStore("stations", {
     },
 
     getStationsFromDB() {
+      const { postfix } = useShiftAuth();
+       console.log(postfix,'postfix');
+
       this.isStationLoaded = true;
-      return Promise.resolve(supabase.from("stationslist").select("stations").single())
+      return Promise.resolve(supabase.from(`stationslist${postfix}`).select("stations").single())
         .then((e) => {
           this.stations = Object.assign(e.data?.stations || {}, this.stations);
         })
@@ -402,10 +406,12 @@ export const useStationsStore = defineStore("stations", {
         .finally(() => (this.isStationLoaded = false));
     },
     getFreshSnapShots(key: string) {
+      const { postfix } = useShiftAuth();
+
       const nightShiftProtection =
         dayjs(key.split("_")[0]).subtract(1, "day").format("YYYY-MM-DD") + FIRST_LIST;
       Promise.resolve(
-        supabase.rpc("get_snapshot_keys_from_date", {
+        supabase.rpc(`get_snapshot_keys_from_date${postfix}`, {
           from_key: nightShiftProtection,
           max_keys: 150,
         }),
@@ -427,8 +433,10 @@ export const useStationsStore = defineStore("stations", {
         .catch((err) => console.log(err));
     },
     saveNewSnapshot() {
+      const { postfix } = useShiftAuth();
+
       return Promise.resolve(
-        supabase.rpc("merge_station_snapshot", {
+        supabase.rpc(`merge_station_snapshot${postfix}`, {
           partial_snapshot: this.snapshot,
         }),
       )

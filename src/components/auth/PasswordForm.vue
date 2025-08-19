@@ -21,6 +21,7 @@
 import { reactive, ref } from 'vue';
 import { ShiftKey, useShiftAuth } from '~/composables/useAuth';
 
+
 const {options,login} = useShiftAuth();
 
 const loading = ref(false);

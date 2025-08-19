@@ -11,6 +11,7 @@ import {
   updateNotification,
 } from "./notifications";
 import { toRaw } from "vue";
+import { useShiftAuth } from "~/composables/useAuth";
 
 interface State {
   workers: Operator[];
@@ -111,8 +112,9 @@ export const useWorkersStore = defineStore("workersStore", {
 
     getWorkers() {
       this.error = null;
+      const { postfix } = useShiftAuth();
 
-      return Promise.resolve(supabase.from("operatorslist").select("*"))
+      return Promise.resolve(supabase.from(`operatorslist${postfix}`).select("*"))
         .then(({ data, error }) => {
           if (!error) this.workers = data;
           else this.error = error.message;
@@ -122,13 +124,14 @@ export const useWorkersStore = defineStore("workersStore", {
     deleteWorker(id: string, loadingHandler: (loadingState: boolean) => void) {
       loadingHandler(true);
       this.error = null;
+      const { postfix } = useShiftAuth();
 
       const worker = this.workers?.find((e) => e.id === id);
       const workerIndex = this.workers?.findIndex((e) => e.id === id);
       const stStore = useStationsStore();
       const glKey = this.globalKey.split("_")[0];
 
-      Promise.resolve(supabase.from("operatorslist").delete().eq("id", id))
+      Promise.resolve(supabase.from(`operatorslist${postfix}`).delete().eq("id", id))
         .then(({ error }) => {
           if (!error) {
             if (stStore.getSnapshotMap.has(this.globalKey)) {
@@ -154,6 +157,8 @@ export const useWorkersStore = defineStore("workersStore", {
     deleteSelectedWorkers(selectedIds: string[], loadingHandler: (loadingState: boolean) => void) {
       loadingHandler(true);
       this.error = null;
+      const { postfix } = useShiftAuth();
+
       const filteredArrForDelete = this.workers.filter((worker) => selectedIds.includes(worker.id));
       const filteredArrForReplace = this.workers.filter(
         (worker) => !selectedIds.includes(worker.id),
@@ -162,7 +167,7 @@ export const useWorkersStore = defineStore("workersStore", {
       const stStore = useStationsStore();
       const glKey = this.globalKey.split("_")[0];
 
-      Promise.resolve(supabase.from("operatorslist").delete().in("id", selectedIds))
+      Promise.resolve(supabase.from(`operatorslist${postfix}`).delete().in("id", selectedIds))
         .then(({ error }) => {
           if (!error) {
             if (stStore.getSnapshotMap.has(this.globalKey)) {
@@ -194,11 +199,13 @@ export const useWorkersStore = defineStore("workersStore", {
     ) {
       loadingHandler(true);
       this.error = null;
+      const { postfix } = useShiftAuth();
+
 
       const stStore = useStationsStore();
       const glKey = this.globalKey.split("_")[0];
 
-      Promise.resolve(supabase.from("operatorslist").insert(worker).select())
+      Promise.resolve(supabase.from(`operatorslist${postfix}`).insert(worker).select())
         .then(({ data, error }) => {
           if (!error) {
             console.log("Worker added:", data);
@@ -227,6 +234,7 @@ export const useWorkersStore = defineStore("workersStore", {
     ) {
       loadingHandler(true);
       this.error = null;
+      const { postfix } = useShiftAuth();
 
       const indexWorker = this.workers.findIndex((worker) => worker.id === id);
       const updatedWorkerFields = () =>
@@ -294,7 +302,7 @@ export const useWorkersStore = defineStore("workersStore", {
         }
       };
 
-      Promise.resolve(supabase.from("operatorslist").update(field).eq("id", id).select())
+      Promise.resolve(supabase.from(`operatorslist${postfix}`).update(field).eq("id", id).select())
         .then(({ data, error }) => {
           if (!error) {
             const operator: Operator = data[0];
