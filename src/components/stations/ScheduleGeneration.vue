@@ -20,13 +20,14 @@
         <div class="castomDateBlock">
           <span>Custom date period</span>
           <el-date-picker v-model="date" type="daterange" range-separator="To" start-placeholder="Start date"
-            end-placeholder="End date" :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY"
+            end-placeholder="End date" :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY
+            || time.getTime() > Date.now() + THIRTY_ONE_DAYS"
             :editable="false" @change="handleDateRangeChange" />
         </div>
       </el-form-item>
     </el-form>
     <div class="scheduleButtonBlock">
-      <el-button v-loading="perfomanceLoader" :disabled="perfomanceLoader" ref="btn" size="large" class="scheduleButton"
+      <el-button v-loading="perfomanceLoader" :disabled="perfomanceLoader || isGenerationProhibed" ref="btn" size="large" class="scheduleButton"
         type="primary" @click="
           runScheduleGenerator(date?.[0] || headerDate, interationsAmount);
         ">{{ perfomanceLoader ? 'Generating is going...' : 'Generate Schedule' }}</el-button>
@@ -46,7 +47,7 @@ import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
 import { generateSchedule } from "./utils/scheduleGenerator";
 import { dayjs } from "element-plus";
-import { FIRST_LIST, ONE_DAY } from "./constants";
+import { FIRST_LIST, ONE_DAY, THIRTY_ONE_DAYS } from "./constants";
 import { Operator } from "~/maintypes/types";
 import { useTimeoutFn } from "@vueuse/core";
 import shuffle from "lodash.shuffle";
@@ -71,6 +72,8 @@ const stationsAmount = computed(() => Object.values(stations).reduce((acc, st) =
 const absentAmount = computed(
   () => stationsAmount.value - availableWorkers.value.length,
 );
+
+const isGenerationProhibed = computed(()=>availableWorkers.value.length < Math.round((stationsAmount.value / 2)));
 
 
 const timeRotation = ref(2);
@@ -121,6 +124,7 @@ const isTodayWeekend = () => {
 
 
 const runScheduleGenerator = (start?: Date, amount: number = 1) => {
+  if(isGenerationProhibed.value) return;
   perfomanceLoader.value = true;
 
   useTimeoutFn(() => {

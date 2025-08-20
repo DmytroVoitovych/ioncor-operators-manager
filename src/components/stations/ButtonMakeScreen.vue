@@ -3,9 +3,12 @@
 </template>
 
 <script lang="ts" setup>
+import { useShiftAuth } from '~/composables/useAuth';
 import { useScreenshot } from '~/composables/useScreenshot';
 
-const {captureAndDownload,isCapturing} = useScreenshot();
+const {postfix} = useShiftAuth();
+
+const {captureAndDownload,isCapturing} = useScreenshot(postfix);
 
 defineExpose({captureAndDownload});
 

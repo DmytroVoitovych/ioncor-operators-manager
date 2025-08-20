@@ -1,8 +1,14 @@
 import { ref } from 'vue';
 import domtoimage from 'dom-to-image-more';
 
-const C_SHIFT = import.meta.env.VITE_C_SHIFT_GROUP;
+type ShiftKeys = 'shift_a' | 'shift_b' | 'shift_c';
 const SENDER_SERVICE = import.meta.env.VITE_TELEGRAM_SENDER_SERVICE;
+
+const shiftsChatIds = {
+'shift_a':import.meta.env.VITE_A_SHIFT_GROUP,
+'shift_b':import.meta.env.VITE_B_SHIFT_GROUP,
+'shift_c':import.meta.env.VITE_C_SHIFT_GROUP
+};
 
 const sendToChat = async (blob: Blob, chatId: string,title:string) => {
   const form = new FormData()
@@ -15,7 +21,7 @@ const sendToChat = async (blob: Blob, chatId: string,title:string) => {
   })
 };
 
-export const useScreenshot = () =>{
+export const useScreenshot = (shift?:string) =>{
   const isCapturing = ref(false);
 
   const captureAndDownload = async (el: HTMLElement,filename = 'screenshot.png') => {
@@ -29,7 +35,7 @@ export const useScreenshot = () =>{
       link.href = URL.createObjectURL(blob);
       link.download = filename;
       link.click();
-      await sendToChat(blob,C_SHIFT,filename);
+      if(shift)  await sendToChat(blob,shiftsChatIds[`shift${shift}` as ShiftKeys],filename);
     } catch (err) {
       console.error('Error in creating a screenshot:', err);
     } finally {
