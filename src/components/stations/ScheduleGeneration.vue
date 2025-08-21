@@ -1,6 +1,10 @@
 <template>
   <section class="scheduleGeneration">
-    <ScheduleAbsentInfo :operatorsAmount="availableWorkers.length" :absentAmount :stationsAmount />
+    <ScheduleAbsentInfo
+      :operatorsAmount="availableWorkers.length"
+      :absentAmount
+      :stationsAmount
+    />
     <div class="scheduleHeadlineBlock">
       <h3>Schedule Generation</h3>
       <slot></slot>
@@ -62,7 +66,9 @@
         class="scheduleButton"
         type="primary"
         @click="runScheduleGenerator(date?.[0] || headerDate, interationsAmount)"
-        >{{ perfomanceLoader ? "Generating is going..." : "Generate Schedule" }}</el-button
+        >{{
+          perfomanceLoader ? "Generating is going..." : "Generate Schedule"
+        }}</el-button
       >
       <el-button
         v-if="!stationsStore.isApproved"
@@ -100,19 +106,21 @@ const perfomanceLoader = ref(false);
 defineProps<{ headerDate: string }>();
 
 const availableWorkers = computed(() =>
-  shuffle(workersStore.workers.filter((worker) => worker.status === "available")).toSorted(
-    (a, b) => a.known_stations.length - b.known_stations.length,
-  ),
+  shuffle(
+    workersStore.workers.filter((worker) => worker.status === "available")
+  ).toSorted((a, b) => a.known_stations.length - b.known_stations.length)
 );
 
 const stations = stationsStore.getStations;
 
-const stationsAmount = computed(() => Object.values(stations).reduce((acc, st) => acc + st, 0));
+const stationsAmount = computed(() =>
+  Object.values(stations).reduce((acc, st) => acc + st, 0)
+);
 
 const absentAmount = computed(() => stationsAmount.value - availableWorkers.value.length);
 
 const isGenerationProhibed = computed(
-  () => availableWorkers.value.length < Math.round(stationsAmount.value / 2),
+  () => availableWorkers.value.length < Math.round(stationsAmount.value / 2)
 );
 
 const timeRotation = ref(2);
@@ -127,7 +135,8 @@ const disabledDate = (date: Date) => {
 
 const interationsAmount = computed<number>(() => timeRotation.value * period.value);
 
-const makeKey = (date: Date, rotation: number) => `${dayjs(date).format("YYYY-MM-DD")}_${rotation}`;
+const makeKey = (date: Date, rotation: number) =>
+  `${dayjs(date).format("YYYY-MM-DD")}_${rotation}`;
 
 const rewriteHistory = (workers: Operator[], date: Date) => {
   const cycleDate = dayjs(date).format("YYYY-MM-DD");
@@ -136,7 +145,9 @@ const rewriteHistory = (workers: Operator[], date: Date) => {
     if (!worker.station_history?.length || worker.status !== "available") return;
     worker.station_history = worker.station_history
       ?.filter((entry) => dayjs(entry.date).isBefore(cycleDate))
-      .toSorted((a, b) => dayjs(a.date).toDate().getTime() - dayjs(b.date).toDate().getTime());
+      .toSorted(
+        (a, b) => dayjs(a.date).toDate().getTime() - dayjs(b.date).toDate().getTime()
+      );
   });
 };
 
@@ -184,7 +195,7 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
         stationsStore,
         availableWorkers.value,
         stationsStore.getStations,
-        date,
+        date
       );
       num++;
 
@@ -203,7 +214,7 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
 
     stationsStore.snapshot = Object.assign(
       markRaw(stationsStore?.snapshot || {}),
-      Object.fromEntries(snapshotMap),
+      Object.fromEntries(snapshotMap)
     );
     stationsStore.replaceAssignments(defaultKey);
     workersStore.replaceWorkers(defaultKey);
@@ -221,11 +232,12 @@ watch(
       stationsStore.stations.changeRequiredPeople("200", 2);
     if (n) stationsStore.stations.changeRequiredPeople("200", 1);
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 onBeforeUnmount(() => {
-  if (stationsStore.stations["200"] === 1) stationsStore.stations.changeRequiredPeople("200", 2);
+  if (stationsStore.stations["200"] === 1)
+    stationsStore.stations.changeRequiredPeople("200", 2);
 });
 </script>
 
