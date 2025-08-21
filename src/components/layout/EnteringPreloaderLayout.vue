@@ -1,9 +1,18 @@
 <template>
- <transition name="fade">
-    <div v-if="loading && !isAuthenticated" class="loading-overlay" aria-busy="true" aria-label="Loading application">
+  <transition name="fade">
+    <div
+      v-if="loading && !isAuthenticated"
+      class="loading-overlay"
+      aria-busy="true"
+      aria-label="Loading application"
+    >
       <div class="spinner"></div>
       <div class="loading-text">
-        <span v-for="(letter, index) in 'IONCOR...'.split('')" :key="index" :style="{ animationDelay: `${index * 0.1}s` }">
+        <span
+          v-for="(letter, index) in 'IONCOR...'.split('')"
+          :key="index"
+          :style="{ animationDelay: `${index * 0.1}s` }"
+        >
           {{ letter }}
         </span>
       </div>
@@ -11,14 +20,11 @@
   </transition>
 </template>
 
-
 <script lang="ts" setup>
-
 defineProps<{
-isAuthenticated:boolean,
-loading:boolean
+  isAuthenticated: boolean;
+  loading: boolean;
 }>();
-
 </script>
 
 <style lang="scss" scoped>
@@ -44,8 +50,12 @@ loading:boolean
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 .loading-text {
   margin-top: 20px;
@@ -58,8 +68,13 @@ loading:boolean
   animation: bounce 0.6s ease infinite;
 }
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 .fade-enter-active,
 .fade-leave-active {
@@ -69,6 +84,4 @@ loading:boolean
 .fade-leave-to {
   opacity: 0;
 }
-
-
 </style>

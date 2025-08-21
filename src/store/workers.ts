@@ -12,6 +12,7 @@ import {
 } from "./notifications";
 import { toRaw } from "vue";
 import { useShiftAuth } from "~/composables/useAuth";
+import { UNASSIGNED } from "~/components/stations/constants";
 
 interface State {
   workers: Operator[];
@@ -66,14 +67,14 @@ export const useWorkersStore = defineStore("workersStore", {
 
     clearCurrentOperatorsStation() {
       this.workers?.forEach((worker) => {
-        if (worker.current_station !== ("unassigned" as StationNumber))
-          worker.current_station = "unassigned" as StationNumber;
+        if (worker.current_station !== (UNASSIGNED as StationNumber))
+          worker.current_station = UNASSIGNED as StationNumber;
       });
     },
 
     unassignOperator(worker: Operator) {
-      if (worker.current_station !== ("unassigned" as StationNumber))
-        worker.current_station = "unassigned" as StationNumber;
+      if (worker.current_station !== (UNASSIGNED as StationNumber))
+        worker.current_station = UNASSIGNED as StationNumber;
       return;
     },
 
@@ -106,7 +107,7 @@ export const useWorkersStore = defineStore("workersStore", {
       worker.station_history ??= [];
 
       worker.station_history.push({ station, date });
-      if (station !== ("unassigned" as StationNumber))
+      if (station !== (UNASSIGNED as StationNumber))
         this.handleWorkerStationVisiting(worker, station);
     },
 
@@ -138,7 +139,7 @@ export const useWorkersStore = defineStore("workersStore", {
               stStore.deleteWorkerFromSnapshot(glKey, id);
               stStore.saveNewSnapshot();
             }
-            if (worker && worker.current_station !== ("unassigned" as StationNumber)) {
+            if (worker && worker.current_station !== (UNASSIGNED as StationNumber)) {
               stStore.unassignPerson(
                 worker.current_station,
                 stStore.choseSideById(worker.current_station, id),
@@ -176,7 +177,7 @@ export const useWorkersStore = defineStore("workersStore", {
             }
 
             filteredArrForDelete.forEach(({ current_station, id }) => {
-              if (current_station !== ("unassigned" as StationNumber))
+              if (current_station !== (UNASSIGNED as StationNumber))
                 stStore.unassignPerson(
                   current_station,
                   stStore.choseSideById(current_station, id),
@@ -201,14 +202,12 @@ export const useWorkersStore = defineStore("workersStore", {
       this.error = null;
       const { postfix } = useShiftAuth();
 
-
       const stStore = useStationsStore();
       const glKey = this.globalKey.split("_")[0];
 
       Promise.resolve(supabase.from(`operatorslist${postfix}`).insert(worker).select())
         .then(({ data, error }) => {
           if (!error) {
-            console.log("Worker added:", data);
             this.workers = [...toRaw(this.workers), ...data];
 
             const operator: Operator = data[0];
@@ -269,7 +268,7 @@ export const useWorkersStore = defineStore("workersStore", {
         const current = field?.current_station;
         const status = field?.status;
         const currentSt = this.workers[indexWorker].current_station;
-        const isAssigned = currentSt !== ("unassigned" as StationNumber);
+        const isAssigned = currentSt !== (UNASSIGNED as StationNumber);
         const isStatusChanged = status && status !== "available";
 
         if (isStatusChanged && isAssigned) {
@@ -288,7 +287,7 @@ export const useWorkersStore = defineStore("workersStore", {
             return "right";
           };
           const assignmentStationType =
-            current !== ("unassigned" as StationNumber) ? current : ("unassigned" as StationNumber);
+            current !== (UNASSIGNED as StationNumber) ? current : (UNASSIGNED as StationNumber);
 
           if (status === "available") {
             store.reactOnStatusChange(this.globalKey, id, status);

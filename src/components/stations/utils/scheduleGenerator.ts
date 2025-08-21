@@ -8,8 +8,8 @@ import {
 import { assignWorkerToStation, removePersonFromStation } from "./stationAssignmentService";
 import { useStationsStore } from "~/store/stations";
 import { useWorkersStore } from "~/store/workers";
-import { toRaw } from "vue";
 import rfdc from "rfdc";
+import { UNASSIGNED } from "../constants";
 export const clone = rfdc({ circles: false });
 
 const generateSchedule = (
@@ -35,7 +35,7 @@ const generateSchedule = (
   const workersList = new Set(availableWorkers);
 
   stationsStore.assignments = {};
-  workersList.forEach((worker) => (worker.current_station = "unassigned" as StationNumber));
+  workersList.forEach((worker) => (worker.current_station = UNASSIGNED as StationNumber));
   const shuffledStations = shuffle(Object.keys(stations) as StationNumber[]).filter(
     (e) => e !== station_130,
   );
@@ -130,7 +130,6 @@ const generateSchedule = (
               return visitsA - visitsB;
             })[0];
 
-            if (stp === worker.station_history?.at(-1)?.station || !stp) debugger;
             if (!stp) {
               if (!candidateForSwap) console.error("edge case");
               removePersonFromStation(candidateForSwap?.id, stationId);

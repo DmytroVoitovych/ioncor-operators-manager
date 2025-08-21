@@ -6,7 +6,7 @@
     class="dialog__creation"
     v-model="dialogFormVisible"
     title="Add new operator"
-    :width="isSmallTablet?'100%':'500'"
+    :width="isSmallTablet ? '100%' : '500'"
     @closed="formRef.resetFields()"
     :close-on-click-modal="false"
   >
@@ -59,15 +59,15 @@
 import { templateRef, useMediaQuery } from "@vueuse/core";
 import { CheckboxValueType, FormInstance } from "element-plus";
 import { watch } from "vue";
-import { computed,ref } from "vue";
-import { StationNumber,UserCreationData, Status } from "~/maintypes/types";
+import { computed, ref } from "vue";
+import { StationNumber, UserCreationData, Status } from "~/maintypes/types";
 import { useStationsStore } from "~/store/stations";
 
 defineProps<{
   loading: boolean;
 }>();
 
-const isSmallTablet = useMediaQuery('(max-width: 600px)');
+const isSmallTablet = useMediaQuery("(max-width: 600px)");
 
 const stationStore = useStationsStore();
 
@@ -130,44 +130,40 @@ defineEmits<{
 </script>
 
 <style lang="scss">
+.el-dialog {
+  @include mq(tablet) {
+    --el-dialog-width: calc(100% - 40px);
+  }
 
-.el-dialog{
+  @include mq(desktop-large) {
+    scale: 2;
+  }
 
-@include mq(tablet){
---el-dialog-width: calc(100% - 40px);
-}
+  @include mq(desktop) {
+    scale: 1.3;
+  }
 
-@include mq(desktop-large){
-scale: 2;
-}
+  @include mq(laptop-large) {
+    scale: 1;
+  }
 
-@include mq(desktop){
-scale:1.3;
-}
-
-@include mq(laptop-large){
-scale: 1;
-}
-
-@include mq(laptop){
-scale: .9;
-}
-
-
+  @include mq(laptop) {
+    scale: 0.9;
+  }
 }
 
 .el-dialog.dialog__creation {
-  --el-dialog-content-font-size:#{fluid-font(14px, 17px, 1440px, 2560px)};
-  --el-dialog-title-font-size:#{fluid-font(18px, 24px, 1440px, 2560px)};
+  --el-dialog-content-font-size: #{fluid-font(14px, 17px, 1440px, 2560px)};
+  --el-dialog-title-font-size: #{fluid-font(18px, 24px, 1440px, 2560px)};
   display: grid;
   row-gap: 16px;
 }
 
-.el-form{
---el-form-label-font-size:#{fluid-font(14px, 17px, 1440px, 2560px)};
+.el-form {
+  --el-form-label-font-size: #{fluid-font(14px, 17px, 1440px, 2560px)};
 }
 
-.el-select{
---el-select-input-font-size: #{fluid-font(14px, 17px, 1440px, 2560px)};
+.el-select {
+  --el-select-input-font-size: #{fluid-font(14px, 17px, 1440px, 2560px)};
 }
 </style>

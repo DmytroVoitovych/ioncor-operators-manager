@@ -26,17 +26,14 @@ const isOperatorAssigned = computed(() => {
   return 0;
 });
 
-const statusClass = computed(()=>
-{
-const oneSideSt = (isOperatorAssigned.value && props.station === 1);
-const oneMissing = props.station === 2 &&  isOperatorAssigned.value === 1;
+const statusClass = computed(() => {
+  const oneSideSt = isOperatorAssigned.value && props.station === 1;
+  const oneMissing = props.station === 2 && isOperatorAssigned.value === 1;
 
-if(isOperatorAssigned.value === 2 || oneSideSt) return 'assigned';
-if(oneMissing) return 'partialy';
-return '';
-}
-);
-
+  if (isOperatorAssigned.value === 2 || oneSideSt) return "assigned";
+  if (oneMissing) return "partialy";
+  return "";
+});
 </script>
 
 <style lang="scss">

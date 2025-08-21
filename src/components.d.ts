@@ -12,6 +12,7 @@ declare module 'vue' {
     AppPreloadLayout: typeof import('./components/layout/AppPreloadLayout.vue')['default']
     AuthForm: typeof import('./components/shared/AuthForm.vue')['default']
     BarPopover: typeof import('./components/common/BarPopover.vue')['default']
+    BaseFooter: typeof import('./components/layout/BaseFooter.vue')['default']
     BaseHeader: typeof import('./components/layout/BaseHeader.vue')['default']
     ButtonClear: typeof import('./components/stations/ButtonClear.vue')['default']
     ButtonMakeScreen: typeof import('./components/stations/ButtonMakeScreen.vue')['default']

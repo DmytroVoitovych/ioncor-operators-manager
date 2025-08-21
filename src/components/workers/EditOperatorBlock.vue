@@ -1,12 +1,12 @@
 <template>
-  <el-button type="primary"  plain size="small" @click="dialogTableVisible = !dialogTableVisible"
+  <el-button type="primary" plain size="small" @click="dialogTableVisible = !dialogTableVisible"
     >Edit</el-button
   >
   <el-dialog
     append-to-body
     v-model="dialogTableVisible"
     title="Edit Operator"
-    :width="isLargeTablet?'100%':'800'"
+    :width="isLargeTablet ? '100%' : '800'"
     :close-on-click-modal="false"
   >
     <el-form :model="formOperatorUpdate" label-width="auto" label-position="left">
@@ -46,9 +46,9 @@
           v-model="formOperatorUpdate.current_station"
           :disabled="formOperatorUpdate.status !== 'available'"
           placeholder="Select current station"
-          >
+        >
           <el-option
-            v-for="station of [...formOperatorUpdate.known_stations, 'unassigned']"
+            v-for="station of [...formOperatorUpdate.known_stations, UNASSIGNED]"
             :key="station"
             :label="station"
             :value="station"
@@ -70,17 +70,18 @@
 
 <script lang="ts" setup>
 import { useWorkersStore } from "~/store/workers";
-import { Operator, StationNumber,  Status } from "~/maintypes/types";
-import { computed,  ref, watch } from "vue";
+import { Operator, StationNumber, Status } from "~/maintypes/types";
+import { computed, ref, watch } from "vue";
 import { CheckboxValueType } from "element-plus";
 import { useStationsStore } from "~/store/stations";
 import { useMediaQuery } from "@vueuse/core";
+import { UNASSIGNED } from "../stations/constants";
 
 const props = defineProps<{
   operatorId: string;
 }>();
 
-const isLargeTablet = useMediaQuery('(max-width: 834px)');
+const isLargeTablet = useMediaQuery("(max-width: 834px)");
 
 const store = useWorkersStore();
 const stationStore = useStationsStore();
@@ -91,13 +92,16 @@ const { updateWorker } = store;
 const operator = ref<Operator>({} as Operator);
 
 const formOperatorUpdate = ref<
-  Omit<Operator, "id" | "created_at" | "updated_at" | "role" | "station_history" | "visited_stations">
+  Omit<
+    Operator,
+    "id" | "created_at" | "updated_at" | "role" | "station_history" | "visited_stations"
+  >
 >({
   name: "",
   surname: "",
   known_stations: [],
   status: "available" as Status,
-  current_station: "unassigned" as StationNumber,
+  current_station: UNASSIGNED as StationNumber,
 });
 
 const checkAll = ref(false);
@@ -149,8 +153,8 @@ const updateOperator = () => {
     if (formOperatorUpdate.value[typedKey] !== operator.value[typedKey]) {
       // @ts-expect-error: typedKey may not match all keys of updatedFields, but is safe here
       updatedFields[typedKey] = formOperatorUpdate.value[typedKey];
-      if(typedKey === 'status' && formOperatorUpdate.value[typedKey] !== 'available') {
-        updatedFields['current_station'] = 'unassigned' as StationNumber;
+      if (typedKey === "status" && formOperatorUpdate.value[typedKey] !== "available") {
+        updatedFields["current_station"] = UNASSIGNED as StationNumber;
       }
     }
   }
@@ -170,7 +174,7 @@ watch(
   () => formOperatorUpdate.value,
   (newValue) => {
     if (!operator.value || !operator.value.id) return;
- const keys = Object.keys(newValue) as (keyof typeof newValue)[];
+    const keys = Object.keys(newValue) as (keyof typeof newValue)[];
     isChanged.value = keys.some((key) => {
       const formValue = newValue[key];
       const operatorValue = operator.value[key];
@@ -210,8 +214,7 @@ const handleCheckAll = (val: CheckboxValueType) => {
 </script>
 
 <style lang="scss" scoped>
-.el-button--small{
-@include fluid-desktop-font(12px, 15px);
+.el-button--small {
+  @include fluid-desktop-font(12px, 15px);
 }
-
 </style>

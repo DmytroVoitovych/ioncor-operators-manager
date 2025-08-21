@@ -6,7 +6,7 @@ import { removePersonFromStation } from "~/components/stations/utils/stationAssi
 import { findWorkerById, isExtraAssignment } from "~/components/stations/utils/workerUtils";
 import { dayjs } from "element-plus";
 import { supabase } from "~/utils/supabase";
-import { FIRST_LIST } from "~/components/stations/constants";
+import { FIRST_LIST, UNASSIGNED } from "~/components/stations/constants";
 import { clone } from "~/components/stations/utils/scheduleGenerator";
 import { saveDataNotification } from "./notifications";
 import { useShiftAuth } from "~/composables/useAuth";
@@ -154,13 +154,13 @@ export const useStationsStore = defineStore("stations", {
       workersStore.unassignOperator(worker);
     },
 
-    assignPerson(stationId: StationId | "unassigned", slotKey: SideKey, personId: string) {
-      if (stationId !== "unassigned") this.assignments[stationId] ??= this.getInitialState(slotKey);
+    assignPerson(stationId: StationId | typeof UNASSIGNED, slotKey: SideKey, personId: string) {
+      if (stationId !== UNASSIGNED) this.assignments[stationId] ??= this.getInitialState(slotKey);
 
       const workersStore = useWorkersStore();
 
       this.removePerson(personId);
-      if (stationId !== "unassigned") this.assignments[stationId][slotKey] = personId;
+      if (stationId !== UNASSIGNED) this.assignments[stationId][slotKey] = personId;
       workersStore.setCurrentStation(personId, stationId as StationNumber);
     },
     outerAssignByTable(stationId: StationId, slotKey: SideKey, personId: string) {
@@ -199,7 +199,7 @@ export const useStationsStore = defineStore("stations", {
 
         if (workerId === -1 && (!keyDate.isAfter(currentDate) || !keyDate.isSame(currentDate)))
           continue;
-        if (worker?.current_station !== ("unassigned" as StationNumber)) {
+        if (worker?.current_station !== (UNASSIGNED as StationNumber)) {
           const snapAssignment = snapData.snp_assignments[worker!.current_station];
           const side = snapAssignment?.left === personId ? "left" : "right";
           this.snapshot[key].snp_assignments[worker!.current_station][side] = "Extra";
@@ -223,7 +223,7 @@ export const useStationsStore = defineStore("stations", {
         const isNextSlot = keyDate.isSame(currentDate) && currentSlot > keySlot;
 
         if (workerIndex === -1 || keyDate.isBefore(currentDate) || isNextSlot) continue;
-        if (worker?.current_station !== ("unassigned" as StationNumber)) {
+        if (worker?.current_station !== (UNASSIGNED as StationNumber)) {
           const snapAssignment = snapData.snp_assignments[worker!.current_station];
           const side = snapAssignment?.left === personId ? "left" : "right";
           this.snapshot[key].snp_assignments[worker!.current_station][side] = "Extra";
@@ -237,7 +237,7 @@ export const useStationsStore = defineStore("stations", {
         worker!.station_history.splice(index, dateLength, ...dateForReplace);
 
         worker!.status = status;
-        worker!.current_station = "unassigned" as StationNumber;
+        worker!.current_station = UNASSIGNED as StationNumber;
         worker!.station_history = sourceWorker?.station_history || [];
       }
     },
@@ -279,7 +279,7 @@ export const useStationsStore = defineStore("stations", {
       const cycleDate = dayjs(date).format("YYYY-MM-DD");
       const sourceWorker = findWorkerById(useWorkersStore().workers, personId);
       if (!sourceWorker) return;
-      debugger;
+
       const n =
         sourceWorker.station_history?.filter(
           (e) => dayjs(e.date).format("YYYY-MM-DD") === cycleDate,
@@ -299,7 +299,6 @@ export const useStationsStore = defineStore("stations", {
           dayRecords[n - 1].station = stationId;
         }
       }
-      console.log(this.snapshot, "updateStationHistory snapshot");
       this.triggerSnapshot();
     },
     performWorkerSwap(currentAssignedId: string, personId: string, stationId: StationId) {
@@ -309,12 +308,12 @@ export const useStationsStore = defineStore("stations", {
 
       const swapOrRemove = worker?.known_stations.includes(desiredWorker!.current_station)
         ? desiredWorker!.current_station
-        : "unassigned";
+        : UNASSIGNED;
 
       const el = this.removeHistory(worker!);
       const date = el?.date || dayjs(workersStore.globalKey.split("_")[0]).toDate();
 
-      if (swapOrRemove !== "unassigned") {
+      if (swapOrRemove !== UNASSIGNED) {
         removePersonFromStation(worker!.id, swapOrRemove);
         workersStore.setWorkerHistory(worker!.id, swapOrRemove, date);
         this.assignPerson(
@@ -324,8 +323,8 @@ export const useStationsStore = defineStore("stations", {
         );
       }
 
-      if (swapOrRemove === "unassigned") {
-        workersStore.setCurrentStation(worker!.id, "unassigned" as StationNumber);
+      if (swapOrRemove === UNASSIGNED) {
+        workersStore.setCurrentStation(worker!.id, UNASSIGNED as StationNumber);
         workersStore.setWorkerHistory(worker!.id, swapOrRemove as StationNumber, date);
       }
 
@@ -344,11 +343,11 @@ export const useStationsStore = defineStore("stations", {
     prepareDesiredWorker(personId: string, stationId: StationId, date: string) {
       const workersStore = useWorkersStore();
       const desiredWorker = workersStore.workers.find((e) => e.id === personId);
-      const dsWorkerCurrentSt = desiredWorker!.current_station as StationNumber | "unassigned";
+      const dsWorkerCurrentSt = desiredWorker!.current_station as StationNumber | typeof UNASSIGNED;
 
       if (
         desiredWorker?.station_history?.at(-1)?.station === dsWorkerCurrentSt ||
-        dsWorkerCurrentSt !== "unassigned"
+        dsWorkerCurrentSt !== UNASSIGNED
       )
         desiredWorker?.station_history?.pop();
 
@@ -379,7 +378,7 @@ export const useStationsStore = defineStore("stations", {
     },
 
     cleanupDuplicateAssignments(worker: Operator) {
-      if (worker.current_station !== ("unassigned" as StationNumber)) {
+      if (worker.current_station !== (UNASSIGNED as StationNumber)) {
         const checkStation = this.assignments[worker.current_station];
         const side = this.choseSide(checkStation);
 
@@ -388,14 +387,13 @@ export const useStationsStore = defineStore("stations", {
         const oneSide = this.stations[worker.current_station] === 1 && checkStation?.right;
 
         if (twoSide || oneSide || worker.status !== "available")
-          worker.current_station = "unassigned" as StationNumber;
+          worker.current_station = UNASSIGNED as StationNumber;
         else this.outerAssignByTable(worker.current_station, side, worker.id);
       }
     },
 
     getStationsFromDB() {
       const { postfix } = useShiftAuth();
-       console.log(postfix,'postfix');
 
       this.isStationLoaded = true;
       return Promise.resolve(supabase.from(`stationslist${postfix}`).select("stations").single())

@@ -10,12 +10,12 @@ body {
   justify-content: center;
 }
 
-.app-bg{
- background-image: var(--light-gradient);
+.app-bg {
+  background-image: var(--light-gradient);
   background-repeat: no-repeat;
   background-position: center;
-  position: fixed; 
-  inset: 0; 
+  position: fixed;
+  inset: 0;
   z-index: -1;
 }
 
@@ -28,10 +28,9 @@ body {
   display: grid;
   grid-template-rows: 0fr 1fr 0fr;
 
-  @include mq(tablet-small){
-display: block;
-}
-  
+  @include mq(tablet-small) {
+    display: block;
+  }
 
   &:has(> .baseAuthContainer) {
     align-content: center;
@@ -133,11 +132,7 @@ display: block;
   & .el-table__body-wrapper tr td.el-table-fixed-column--right {
     background-color: var(--neutral-0);
   }
-
-  
 }
-
-
 
 @media (min-height: 600px) and (max-height: 679.5px) and (min-width: 960px) {
   .scale {
@@ -156,4 +151,3 @@ display: block;
     transform: scale(0.9);
   }
 }
-

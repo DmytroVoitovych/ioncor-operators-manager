@@ -7,14 +7,14 @@ const isExtraAssignment = (assignedId: string | null): boolean => {
   return assignedId?.includes("Extra") ?? false;
 };
 
-const createOptimizedWorker = (worker:Operator) => {
+const createOptimizedWorker = (worker: Operator) => {
   const forMonth = -124;
 
-    if (!worker?.station_history?.length) return worker;
-    return {
-      ...worker,
-      station_history: worker.station_history.slice(forMonth)
-    };
+  if (!worker?.station_history?.length) return worker;
+  return {
+    ...worker,
+    station_history: worker.station_history.slice(forMonth),
   };
+};
 
 export { isExtraAssignment, findWorkerById, createOptimizedWorker };

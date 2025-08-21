@@ -46,7 +46,7 @@ export const STATIONS: StationCollection = {
   },
   changeRequiredPeople(name: StationId, requiredPeople: number) {
     this[name] = requiredPeople;
-    },
+  },
 };
 
 type StationNumber = Exclude<
@@ -97,5 +97,5 @@ export type {
   StationNumber,
   StationId,
   StationMap,
-  OperatorAbsence
+  OperatorAbsence,
 };

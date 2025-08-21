@@ -43,7 +43,7 @@ export function useShiftAuth() {
         password,
       });
 
-      if (error) return loginError(error.code,error.message);
+      if (error) return loginError(error.code, error.message);
 
       user.value = data.user;
       isAuthenticated.value = true;
@@ -56,13 +56,12 @@ export function useShiftAuth() {
   };
 
   const logout = async () => {
-
     await supabase.auth.signOut();
     isAuthenticated.value = false;
     user.value = null;
     currentShift.value = null;
     useStationsStore().switchApprovmentFlag(true);
-    };
+  };
 
   const authInit = async () => {
     const { data } = await supabase.auth.getSession();
@@ -78,7 +77,7 @@ export function useShiftAuth() {
   supabase.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user ?? null;
     currentShift.value = getCurrentShift(user.value?.email || null);
-    console.log("state change", isAuthenticated.value);
+
     if (user.value) isAuthenticated.value = true;
     else isAuthenticated.value = false;
   });
@@ -93,7 +92,6 @@ export function useShiftAuth() {
         await useStationsStore().getStationsFromDB(),
         useStationsStore().getFreshSnapShots(useWorkersStore().globalKey),
       ]);
-
     } catch (dataError) {
       console.error("Data loading error:", dataError);
     }
@@ -114,5 +112,5 @@ export function useShiftAuth() {
     authInit,
     postfix: postfix.value,
     loadUserData,
-    };
+  };
 }

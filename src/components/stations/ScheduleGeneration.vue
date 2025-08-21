@@ -11,30 +11,70 @@
           <el-radio :value="4">Every two hours</el-radio>
           <el-radio :value="2">Every four hours</el-radio>
           <el-radio :value="1">full day</el-radio>
-        </el-radio-group></el-form-item>
+        </el-radio-group></el-form-item
+      >
       <el-form-item label="Period Selection">
         <el-radio-group v-model="period">
-          <el-radio :value="1" @click="() => { if (date) date = []; }">Day</el-radio>
-          <el-radio :value="9" @click="() => { if (date) date = []; }">Week</el-radio>
+          <el-radio
+            :value="1"
+            @click="
+              () => {
+                if (date) date = [];
+              }
+            "
+            >Day</el-radio
+          >
+          <el-radio
+            :value="9"
+            @click="
+              () => {
+                if (date) date = [];
+              }
+            "
+            >Week</el-radio
+          >
         </el-radio-group>
         <div class="castomDateBlock">
           <span>Custom date period</span>
-          <el-date-picker v-model="date" type="daterange" range-separator="To" start-placeholder="Start date"
-            end-placeholder="End date" :disabled-date="(time: Date) => time.getTime() < Date.now() - ONE_DAY
-            || time.getTime() > Date.now() + THIRTY_ONE_DAYS"
-            :editable="false" @change="handleDateRangeChange" />
+          <el-date-picker
+            v-model="date"
+            type="daterange"
+            range-separator="To"
+            start-placeholder="Start date"
+            end-placeholder="End date"
+            :disabled-date="
+              (time: Date) =>
+                time.getTime() < Date.now() - ONE_DAY ||
+                time.getTime() > Date.now() + THIRTY_ONE_DAYS
+            "
+            :editable="false"
+            @change="handleDateRangeChange"
+          />
         </div>
       </el-form-item>
     </el-form>
     <div class="scheduleButtonBlock">
-      <el-button v-loading="perfomanceLoader" :disabled="perfomanceLoader || isGenerationProhibed" ref="btn" size="large" class="scheduleButton"
-        type="primary" @click="
-          runScheduleGenerator(date?.[0] || headerDate, interationsAmount);
-        ">{{ perfomanceLoader ? 'Generating is going...' : 'Generate Schedule' }}</el-button>
-      <el-button v-if="!stationsStore.isApproved" @click="() => {
-        stationsStore.saveNewSnapshot();
-        stationsStore.switchApprovmentFlag(true);
-      }" size="large" type="success">
+      <el-button
+        v-loading="perfomanceLoader"
+        :disabled="perfomanceLoader || isGenerationProhibed"
+        ref="btn"
+        size="large"
+        class="scheduleButton"
+        type="primary"
+        @click="runScheduleGenerator(date?.[0] || headerDate, interationsAmount)"
+        >{{ perfomanceLoader ? "Generating is going..." : "Generate Schedule" }}</el-button
+      >
+      <el-button
+        v-if="!stationsStore.isApproved"
+        @click="
+          () => {
+            stationsStore.saveNewSnapshot();
+            stationsStore.switchApprovmentFlag(true);
+          }
+        "
+        size="large"
+        type="success"
+      >
         Save data in DB
       </el-button>
     </div>
@@ -60,21 +100,20 @@ const perfomanceLoader = ref(false);
 defineProps<{ headerDate: string }>();
 
 const availableWorkers = computed(() =>
-  shuffle(workersStore.workers
-    .filter((worker) => worker.status === "available"))
-    .toSorted((a, b) => a.known_stations.length - b.known_stations.length),
+  shuffle(workersStore.workers.filter((worker) => worker.status === "available")).toSorted(
+    (a, b) => a.known_stations.length - b.known_stations.length,
+  ),
 );
 
 const stations = stationsStore.getStations;
 
 const stationsAmount = computed(() => Object.values(stations).reduce((acc, st) => acc + st, 0));
 
-const absentAmount = computed(
-  () => stationsAmount.value - availableWorkers.value.length,
+const absentAmount = computed(() => stationsAmount.value - availableWorkers.value.length);
+
+const isGenerationProhibed = computed(
+  () => availableWorkers.value.length < Math.round(stationsAmount.value / 2),
 );
-
-const isGenerationProhibed = computed(()=>availableWorkers.value.length < Math.round((stationsAmount.value / 2)));
-
 
 const timeRotation = ref(2);
 const period = ref(1);
@@ -104,7 +143,6 @@ const rewriteHistory = (workers: Operator[], date: Date) => {
 const rewriteSnapshot = (date: Date) => {
   const cycleDate = dayjs(date).format("YYYY-MM-DD");
   for (const [key] of stationsStore.getSnapshotMap) {
-
     if (key.startsWith(cycleDate)) delete stationsStore.snapshot[key];
   }
 };
@@ -114,7 +152,7 @@ const handleDateRangeChange = (e: [Date, Date] | null) => {
   const startDate = dayjs(e[0]);
   const endDate = dayjs(e[1]);
 
-  period.value = endDate.diff(startDate, 'day') + 1;
+  period.value = endDate.diff(startDate, "day") + 1;
 };
 
 const isTodayWeekend = () => {
@@ -122,9 +160,8 @@ const isTodayWeekend = () => {
   return day === 0 || day === 6;
 };
 
-
 const runScheduleGenerator = (start?: Date, amount: number = 1) => {
-  if(isGenerationProhibed.value) return;
+  if (isGenerationProhibed.value) return;
   perfomanceLoader.value = true;
 
   useTimeoutFn(() => {
@@ -134,8 +171,10 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
     let date = start || new Date();
 
     for (let index = 0; index < amount; index++) {
-
-      if (disabledDate(date as Date) && !isTodayWeekend()) { date = dayjs(date).add(1, "day").toDate(); continue };
+      if (disabledDate(date as Date) && !isTodayWeekend()) {
+        date = dayjs(date).add(1, "day").toDate();
+        continue;
+      }
 
       if (!num) {
         rewriteHistory(toRaw(workersStore.workers), date);
@@ -162,7 +201,10 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
     const defaultRotation = +FIRST_LIST.slice(-1);
     const defaultKey = makeKey(defaultDate, defaultRotation);
 
-    stationsStore.snapshot = Object.assign(markRaw(stationsStore?.snapshot || {}), Object.fromEntries(snapshotMap));
+    stationsStore.snapshot = Object.assign(
+      markRaw(stationsStore?.snapshot || {}),
+      Object.fromEntries(snapshotMap),
+    );
     stationsStore.replaceAssignments(defaultKey);
     workersStore.replaceWorkers(defaultKey);
     stationsStore.triggerSnapshot();
@@ -175,19 +217,16 @@ const runScheduleGenerator = (start?: Date, amount: number = 1) => {
 watch(
   absentAmount,
   (n) => {
-
-    if (stationsStore.stations["200"] === 1 && (!n))
+    if (stationsStore.stations["200"] === 1 && !n)
       stationsStore.stations.changeRequiredPeople("200", 2);
     if (n) stationsStore.stations.changeRequiredPeople("200", 1);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onBeforeUnmount(() => {
-  if (stationsStore.stations["200"] === 1)
-    stationsStore.stations.changeRequiredPeople("200", 2);
+  if (stationsStore.stations["200"] === 1) stationsStore.stations.changeRequiredPeople("200", 2);
 });
-
 </script>
 
 <style scoped lang="scss">
@@ -199,18 +238,15 @@ onBeforeUnmount(() => {
   @include fluid-desktop-font(16px, 19px);
 }
 
-
 .el-form {
-  --el-form-label-font-size:#{fluid-font(16px, 19px, 1440px, 2560px)};
+  --el-form-label-font-size: #{fluid-font(16px, 19px, 1440px, 2560px)};
   display: flex;
   justify-content: space-evenly;
-
 }
 
 .el-form-item {
   :deep(.el-form-item__content) {
     flex-direction: column;
-
   }
 }
 
@@ -219,9 +255,8 @@ onBeforeUnmount(() => {
   align-self: start;
 
   & .el-radio {
-    --el-radio-font-size:#{fluid-font(14px, 17px, 1440px, 2560px)};
+    --el-radio-font-size: #{fluid-font(14px, 17px, 1440px, 2560px)};
     align-self: start;
-
   }
 }
 
@@ -241,7 +276,6 @@ onBeforeUnmount(() => {
 .scheduleButton {
   flex-grow: 1;
   align-self: center;
-
 }
 
 :deep(.el-loading-mask) {
@@ -270,6 +304,5 @@ onBeforeUnmount(() => {
   @include mq(tablet-small) {
     --el-date-editor-width: 220px;
   }
-
 }
 </style>
