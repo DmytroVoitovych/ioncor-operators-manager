@@ -4,6 +4,7 @@
     :model="form"
     label-width="auto"
     @keyup.enter="reqAccess(form.pass, form.shift)"
+    class="auth"
   >
     <el-form-item label="Shift Password" prop="pass">
       <el-input v-model="form.pass" type="password" autocomplete="off" show-password />
