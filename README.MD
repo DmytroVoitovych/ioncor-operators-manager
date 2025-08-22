@@ -9,7 +9,7 @@
 ### 🎥 Live Demo
 <div align="center">
   <video width="100%" max-width="800" controls>
-    <source src="https://private-user-images.githubusercontent.com/97598913/480894251-857c754f-fe15-4f3e-8fe5-1c7eb9fc3a1e.mp4?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTU4NTQ2MTIsIm5iZiI6MTc1NTg1NDMxMiwicGF0aCI6Ii85NzU5ODkxMy80ODA4OTQyNTEtODU3Yzc1NGYtZmUxNS00ZjNlLThmZTUtMWM3ZWI5ZmMzYTFlLm1wND9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA4MjIlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwODIyVDA5MTgzMlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTAxOGM4ZDNjODFjOTk3ZTRkNzQ0ODk4MDY1ZTc5YjU4MTg2ZGM2YTczZmFjMmU5N2UwMTYwMDM1NmY2M2VlYTEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.jRpA7ivQty1mRD0yJb9xrx1o30lBLmtjONOHvEIP8eU" type="video/mp4">
+    <source src="https://drive.google.com/file/d/1r-5szsAFzRvzkvSgPCaBZa2-TYUSOvAF/view?usp=sharing" type="video/mp4">
     <p>🎬 Demo video showing Ioncor Operators Manager in action</p>
   </video>
 </div>
