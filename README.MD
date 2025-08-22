@@ -7,12 +7,7 @@
 **Ioncor Operators Manager** isn't just another web application—it's your trusty companion in the world of production chaos! 🎪 Built with cutting-edge technologies like Vue 3, Pinia, Vite, and Element Plus, it transforms routine personnel management into an engaging experience.
 
 ### 🎥 Live Demo
-<div align="center">
-  <video width="100%" max-width="800" controls>
-    <source src="https://drive.google.com/file/d/1r-5szsAFzRvzkvSgPCaBZa2-TYUSOvAF/view?usp=sharing" type="video/mp4">
-    <p>🎬 Demo video showing Ioncor Operators Manager in action</p>
-  </video>
-</div>
+https://github.com/user-attachments/assets/0e86c34b-3f61-421d-98af-73c748f1d094
 
 ### 🌟 Why Choose Us?
 - 💪 **Powerful & Flexible** — handles any production challenge
